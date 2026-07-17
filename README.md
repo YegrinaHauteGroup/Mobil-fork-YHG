@@ -69,10 +69,13 @@ npm install
 
 1. [Supabase](https://app.supabase.com) 에서 새 프로젝트 생성
 2. SQL Editor 에서 마이그레이션을 순서대로 실행:
-   - `supabase/migrations/0001_init.sql`
-   - `supabase/migrations/0002_storage.sql`
-   - `supabase/migrations/0003_profile_trigger.sql`
-   - `supabase/migrations/0004_code_files.sql`
+   - `supabase/migrations/0001_init.sql` — 초기 스키마 · RLS · 함수 (지시서 verbatim)
+   - `supabase/migrations/0002_storage.sql` — Storage 버킷 · 정책 (지시서 verbatim)
+   - `supabase/migrations/0003_profile_trigger.sql` — 프로필 자동 생성 트리거
+   - `supabase/migrations/0004_code_files.sql` — 코드 에디터 테이블 · RLS
+   - `supabase/migrations/0005_harden_function_grants.sql` — SECURITY DEFINER 함수 권한 하드닝
+   - `supabase/migrations/0006_fix_pgcrypto_search_path.sql` — pgcrypto(extensions 스키마) 해석 수정
+   - `supabase/migrations/0007_fix_role_change_guard.sql` — role 자기승격 취약점 시정
 
 > `0003` 은 가입 시 `profiles` 행을 자동 생성하는 트리거입니다. `0001` 은 profiles
 > INSERT 정책을 두지 않으므로, `auth.users` INSERT 시점의 SECURITY DEFINER 트리거로
@@ -98,12 +101,33 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-public-key>
 있습니다. 따라서 **최초 1회에 한해** Supabase SQL Editor 에서 코드를 직접 삽입합니다:
 
 ```sql
+-- pgcrypto(digest)는 Supabase 에서 extensions 스키마에 있으므로 스키마 명시
 insert into public.admin_codes (code_hash, expires_at)
-values (encode(digest('여기에_임의의_평문코드', 'sha256'), 'hex'), null);
+values (encode(extensions.digest('여기에_임의의_평문코드', 'sha256'), 'hex'), null);
 ```
 
 사용한 평문 코드를 기록해 두고, 앱에서 회원가입 후 `/admin/redeem` 에 입력하면
 관리자로 승격됩니다. 이후 관리자 콘솔에서 추가 코드를 발급할 수 있습니다.
+
+## 보안 하드닝 (연결 검증 중 발견·시정)
+
+Supabase 연결 후 DB 레벨 기능 검증에서 두 건의 실제 결함을 발견해 근본
+시정(마이그레이션 0006/0007)했습니다.
+
+1. **pgcrypto 해석 오류 (0006).** `redeem_admin_code`/`generate_admin_code` 가
+   `search_path = public` 으로 고정되어, `extensions` 스키마에 설치된 pgcrypto
+   함수(`digest`, `gen_random_bytes`)를 찾지 못해 런타임에 실패했습니다. 두 함수의
+   `search_path` 에 `extensions` 를 추가해 해결했습니다.
+2. **role 자기 승격 취약점 (0007).** 0001 의 `prevent_role_change` 가
+   `current_user = session_user` 일 때만 차단하는데, PostgREST 는 항상
+   `authenticated ≠ authenticator` 이므로 이 가드가 발동하지 않았습니다. 그 결과
+   인증 사용자가 `profiles.role` 을 직접 `admin` 으로 변경할 수 있었습니다. role
+   변경을 `redeem_admin_code` 가 세우는 트랜잭션 로컬 플래그가 있을 때만 허용하도록
+   재설계했습니다(클라이언트는 PostgREST 로 GUC 를 위조할 수 없음).
+
+`get_advisors` 보안 점검의 나머지 경고(SECURITY DEFINER 함수 실행 권한)는
+`is_admin`(RLS 정책이 호출) 및 관리자 코드 함수(authenticated 전용, 내부
+`is_admin` 체크로 보호)로, 모두 의도된 설계입니다.
 
 ### 5. 개발 서버
 
