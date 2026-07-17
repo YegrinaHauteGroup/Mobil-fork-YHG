@@ -15,7 +15,7 @@ export type Json =
 
 export type Role = "user" | "admin";
 export type Permission = "view" | "edit";
-export type TargetType = "document" | "file";
+export type TargetType = "document" | "file" | "code";
 export type AuditAction =
   | "view"
   | "create"
@@ -82,6 +82,53 @@ export interface Database {
         };
         Insert: {
           document_id: string;
+          user_id: string;
+          permission: Permission;
+          granted_by: string;
+        };
+        Update: {
+          permission?: Permission;
+        };
+        Relationships: [];
+      };
+      code_files: {
+        Row: {
+          id: string;
+          owner_id: string;
+          name: string;
+          language: string;
+          content: string;
+          is_public: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          name?: string;
+          language?: string;
+          content?: string;
+          is_public?: boolean;
+        };
+        Update: {
+          name?: string;
+          language?: string;
+          content?: string;
+          is_public?: boolean;
+        };
+        Relationships: [];
+      };
+      code_file_permissions: {
+        Row: {
+          id: string;
+          code_file_id: string;
+          user_id: string;
+          permission: Permission;
+          granted_by: string;
+          granted_at: string;
+        };
+        Insert: {
+          code_file_id: string;
           user_id: string;
           permission: Permission;
           granted_by: string;

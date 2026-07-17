@@ -7,9 +7,10 @@ export default async function DashboardPage() {
   const { userId, profile } = await requireUser();
   const supabase = await createClient();
 
-  const [filesRes, docsRes, sharedDocsRes] = await Promise.all([
+  const [filesRes, docsRes, codeRes, sharedDocsRes] = await Promise.all([
     supabase.from("files").select("id", { count: "exact", head: true }),
     supabase.from("documents").select("id", { count: "exact", head: true }),
+    supabase.from("code_files").select("id", { count: "exact", head: true }),
     supabase
       .from("documents")
       .select("id, title, updated_at, owner_id")
@@ -19,6 +20,7 @@ export default async function DashboardPage() {
 
   const fileCount = filesRes.count ?? 0;
   const docCount = docsRes.count ?? 0;
+  const codeCount = codeRes.count ?? 0;
   const recentDocs = sharedDocsRes.data ?? [];
 
   return (
@@ -52,6 +54,10 @@ export default async function DashboardPage() {
           <div className="stat">
             <div className="stat-val">{docCount}</div>
             <div className="stat-label label">DOCUMENTS</div>
+          </div>
+          <div className="stat">
+            <div className="stat-val">{codeCount}</div>
+            <div className="stat-label label">CODE FILES</div>
           </div>
           <div className="stat">
             <div className="stat-val">{fileCount}</div>

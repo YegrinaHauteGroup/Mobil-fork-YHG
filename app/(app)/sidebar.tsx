@@ -9,6 +9,7 @@ const MAIN: NavItem[] = [
   { href: "/dashboard", label: "대시보드", icon: "▦" },
   { href: "/files", label: "파일", icon: "▤" },
   { href: "/documents", label: "문서", icon: "▧" },
+  { href: "/code", label: "코드", icon: "‹›" },
 ];
 
 export function Sidebar({

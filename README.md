@@ -26,7 +26,13 @@
 | 관리자 | 코드 등록(`/admin/redeem`)으로 권한 승격, 관리자 콘솔에서 코드 발급 |
 | 파일 | 업로드 · 다운로드(서명 URL) · 삭제 · 공유(view/edit) |
 | 문서 | 생성 · 조회 · 편집(자동/수동 저장) · 공유(view/edit) · 공개 토글 |
+| 코드 | 웹 코드 에디터(CodeMirror 6) — 구문 강조 · 다국어 · 자동/수동 저장 · 공유 · 공개 토글 |
 | 감사 | 주요 작업을 `audit_logs` 에 기록, 관리자 콘솔에서 조회 |
+
+> **코드 에디터**는 초기 지시서에서 제외 항목이었으나 이후 명시적 요청으로 추가되었습니다.
+> GitHub 웹 에디터가 사용하는 **CodeMirror 6** 을 자체 호스팅(CDN·웹워커 불필요)하며,
+> JavaScript/TypeScript · Python · HTML/CSS · JSON · SQL · Rust · Go 등 15종 언어의
+> 구문 강조를 지원합니다.
 
 공유는 상대방의 **공유 ID(user UUID)** 로 이루어집니다. 제공된 RLS 정책상 일반
 사용자는 타인의 프로필을 이메일로 조회할 수 없으므로, 각 사용자는 대시보드에서
@@ -41,7 +47,9 @@ app/
     dashboard/       개요 · 내 공유 ID · 최근 문서
     files/           파일 저장소
     documents/[id]/  Tiptap 문서 에디터
+    code/[id]/       CodeMirror 코드 에디터
     admin/           코드 등록 · 관리자 콘솔
+components/codemirror/ 코드 에디터 래퍼 · 테마 · 언어 매핑
   auth/              콜백 · 로그아웃 라우트
 lib/supabase/        browser · server · middleware 클라이언트
 components/          공용 UI (모달 · 공유 다이얼로그 · 복사 필드)
@@ -64,6 +72,7 @@ npm install
    - `supabase/migrations/0001_init.sql`
    - `supabase/migrations/0002_storage.sql`
    - `supabase/migrations/0003_profile_trigger.sql`
+   - `supabase/migrations/0004_code_files.sql`
 
 > `0003` 은 가입 시 `profiles` 행을 자동 생성하는 트리거입니다. `0001` 은 profiles
 > INSERT 정책을 두지 않으므로, `auth.users` INSERT 시점의 SECURITY DEFINER 트리거로
@@ -111,6 +120,7 @@ npm run dev
 
 ## 범위
 
-이번 단계는 인증 · 관리자 승격 · 파일 저장소 · 문서 편집으로 한정됩니다. 실시간
-협업(Yjs), 온라인 코드 에디터(Monaco), 폴더 계층 구조는 포함하지 않습니다.
-자세한 요구사항은 [`docs/SaaS_구축_지시서.md`](docs/SaaS_구축_지시서.md) 참고.
+이번 단계는 인증 · 관리자 승격 · 파일 저장소 · 문서 편집 · 코드 에디터로
+구성됩니다. 실시간 협업(Yjs)과 폴더 계층 구조는 포함하지 않습니다. 코드
+에디터는 초기 지시서의 제외 항목이었으나 명시적 요청으로 추가되었습니다.
+초기 요구사항은 [`docs/SaaS_구축_지시서.md`](docs/SaaS_구축_지시서.md) 참고.
