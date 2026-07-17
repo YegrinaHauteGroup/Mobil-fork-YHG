@@ -42,6 +42,26 @@ export async function getSignedUrl(
   return { url: signed.signedUrl };
 }
 
+/** 파일 표시 이름 변경 (스토리지 경로는 유지, 메타데이터만 갱신). */
+export async function renameFile(
+  fileId: string,
+  newName: string
+): Promise<ActionResult> {
+  const name = newName.trim();
+  if (!name) return { ok: false, error: "이름을 입력하세요." };
+  if (name.length > 255) return { ok: false, error: "이름이 너무 깁니다." };
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("files")
+    .update({ file_name: name })
+    .eq("id", fileId);
+
+  if (error) return { ok: false, error: "이름 변경에 실패했습니다." };
+  revalidatePath("/files");
+  return { ok: true };
+}
+
 /** 스토리지 객체와 메타데이터 행을 함께 삭제. */
 export async function deleteFile(fileId: string): Promise<ActionResult> {
   const supabase = await createClient();

@@ -146,6 +146,21 @@ export function CodeEditor({
     else setError(res.error);
   };
 
+  // 로컬 파일로 내보내기 (브라우저 다운로드, 네트워크 불필요)
+  const downloadCode = () => {
+    const blob = new Blob([contentRef.current], {
+      type: "text/plain;charset=utf-8",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name.trim() || "untitled.txt";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
   const stateLabel =
     saveState === "saving"
       ? "저장 중…"
@@ -190,6 +205,9 @@ export function CodeEditor({
           >
             ● {stateLabel}
           </span>
+          <button className="btn btn-sm" onClick={downloadCode}>
+            다운로드
+          </button>
           {isOwner && (
             <>
               <button className="btn btn-sm" onClick={togglePublic}>

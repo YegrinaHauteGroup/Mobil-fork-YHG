@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatBytes, formatDate } from "@/lib/format";
@@ -8,6 +8,7 @@ import { ShareDialog } from "@/components/share-dialog";
 import {
   deleteFile,
   getSignedUrl,
+  renameFile,
   shareFile,
   revokeFileShare,
   listFileShares,
@@ -39,17 +40,31 @@ export function FilesClient({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<FileRow | null>(null);
+  const [query, setQuery] = useState("");
+  const [dragOver, setDragOver] = useState(false);
+  const dragDepth = useRef(0);
   const [pending, start] = useTransition();
 
   const onPick = () => inputRef.current?.click();
 
-  const onFiles = async (fileList: FileList | null) => {
-    if (!fileList || fileList.length === 0) return;
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return initialFiles;
+    return initialFiles.filter(
+      (f) =>
+        f.file_name.toLowerCase().includes(q) ||
+        (f.mime_type ?? "").toLowerCase().includes(q)
+    );
+  }, [initialFiles, query]);
+
+  const uploadFiles = async (fileList: FileList | File[] | null) => {
+    const files = fileList ? Array.from(fileList) : [];
+    if (files.length === 0) return;
     setError(null);
     setUploading(true);
 
     try {
-      for (const file of Array.from(fileList)) {
+      for (const file of files) {
         const fileId = crypto.randomUUID();
         const safeName = file.name.replace(/[^\w.\-() ]+/g, "_");
         const path = `${userId}/${fileId}/${safeName}`;
@@ -72,7 +87,6 @@ export function FilesClient({
         });
 
         if (metaErr) {
-          // 메타데이터 기록 실패 시 업로드된 객체를 정리한다 (고아 방지).
           await supabase.storage.from(BUCKET).remove([path]);
           throw new Error(`메타데이터 기록 실패: ${file.name}`);
         }
@@ -93,14 +107,43 @@ export function FilesClient({
     }
   };
 
+  // ---- 드래그 앤 드롭 ----
+  const onDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes("Files")) {
+      dragDepth.current += 1;
+      setDragOver(true);
+    }
+  };
+  const onDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+  };
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragDepth.current = Math.max(0, dragDepth.current - 1);
+    if (dragDepth.current === 0) setDragOver(false);
+  };
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragDepth.current = 0;
+    setDragOver(false);
+    if (e.dataTransfer.files?.length) uploadFiles(e.dataTransfer.files);
+  };
+
   const download = (id: string) =>
     start(async () => {
       const res = await getSignedUrl(id);
-      if ("url" in res) {
-        window.location.href = res.url;
-      } else {
-        setError(res.error);
-      }
+      if ("url" in res) window.location.href = res.url;
+      else setError(res.error);
+    });
+
+  const rename = (row: FileRow) =>
+    start(async () => {
+      const next = window.prompt("새 파일 이름", row.file_name);
+      if (next == null || next.trim() === "" || next === row.file_name) return;
+      const res = await renameFile(row.id, next);
+      if (!res.ok) setError(res.error);
+      else router.refresh();
     });
 
   const remove = (row: FileRow) =>
@@ -113,13 +156,19 @@ export function FilesClient({
     });
 
   return (
-    <>
+    <div
+      onDragEnter={onDragEnter}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+      style={{ position: "relative" }}
+    >
       <div className="page-head">
         <div>
           <h1 className="page-h">파일 저장소</h1>
           <p className="page-sub">
-            본인 소유 및 공유받은 파일. 업로드 경로는 {"{uid}/{file_id}/{name}"}{" "}
-            규칙을 따릅니다.
+            본인 소유 및 공유받은 파일. 파일을 이 영역에 끌어다 놓아 업로드할 수
+            있습니다.
           </p>
         </div>
         <div className="row">
@@ -128,7 +177,7 @@ export function FilesClient({
             type="file"
             multiple
             hidden
-            onChange={(e) => onFiles(e.target.files)}
+            onChange={(e) => uploadFiles(e.target.files)}
           />
           <button
             className="btn btn-primary"
@@ -144,12 +193,25 @@ export function FilesClient({
 
       <div className="panel">
         <div className="panel-header">
-          <span className="label">FILES ({initialFiles.length})</span>
+          <span className="label">
+            FILES ({filtered.length}
+            {query ? ` / ${initialFiles.length}` : ""})
+          </span>
+          <input
+            className="input"
+            style={{ width: 240, height: 30 }}
+            placeholder="이름·유형 검색…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
         </div>
         {initialFiles.length === 0 ? (
           <div className="empty">
-            저장된 파일이 없습니다. 위의 “파일 업로드”로 시작하세요.
+            저장된 파일이 없습니다. “파일 업로드” 또는 드래그 앤 드롭으로
+            시작하세요.
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="empty">“{query}” 와 일치하는 파일이 없습니다.</div>
         ) : (
           <table className="table">
             <thead>
@@ -159,11 +221,11 @@ export function FilesClient({
                 <th style={{ width: 100 }}>크기</th>
                 <th style={{ width: 160 }}>업로드</th>
                 <th style={{ width: 60 }}>소유</th>
-                <th style={{ width: 210 }}></th>
+                <th style={{ width: 280 }}></th>
               </tr>
             </thead>
             <tbody>
-              {initialFiles.map((f) => {
+              {filtered.map((f) => {
                 const owned = f.owner_id === userId;
                 return (
                   <tr key={f.id}>
@@ -191,6 +253,13 @@ export function FilesClient({
                           <>
                             <button
                               className="btn btn-ghost btn-sm"
+                              onClick={() => rename(f)}
+                              disabled={pending}
+                            >
+                              이름변경
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-sm"
                               onClick={() => setShareTarget(f)}
                             >
                               공유
@@ -214,6 +283,15 @@ export function FilesClient({
         )}
       </div>
 
+      {dragOver && (
+        <div className="dropzone">
+          <div className="dropzone-inner">
+            <div className="dropzone-icon">⬇</div>
+            여기에 놓아 업로드
+          </div>
+        </div>
+      )}
+
       {shareTarget && (
         <ShareDialog
           targetLabel={shareTarget.file_name}
@@ -224,6 +302,27 @@ export function FilesClient({
           onClose={() => setShareTarget(null)}
         />
       )}
-    </>
+
+      <style>{dropCss}</style>
+    </div>
   );
 }
+
+const dropCss = `
+.dropzone {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(10,12,15,0.72);
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.dropzone-inner {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 40px 64px;
+  border: 2px dashed var(--border-2);
+  border-radius: var(--radius-lg);
+  background: var(--bg-2);
+  color: var(--text-1);
+  font-size: 14px;
+}
+.dropzone-icon { font-size: 26px; color: var(--accent); }
+`;

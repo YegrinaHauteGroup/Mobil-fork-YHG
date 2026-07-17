@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { DocumentEditor } from "./editor";
+import { DocumentEditorLoader } from "./editor-loader";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +50,7 @@ export default async function DocumentPage({
         </div>
         <span className="crumb">{canEdit ? "READ · WRITE" : "READ ONLY"}</span>
       </div>
-      <DocumentEditor
+      <DocumentEditorLoader
         docId={doc.id}
         initialTitle={doc.title}
         initialContent={doc.content}

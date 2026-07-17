@@ -27,7 +27,7 @@
   color: var(--accent);
 }
 .auth-brand .brand-name {
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.18em;
   color: var(--text-0);
 }
@@ -38,8 +38,8 @@
   padding: 28px 26px;
 }
 .auth-h {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 500;
   color: var(--text-0);
   margin: 0 0 4px;
 }

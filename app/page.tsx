@@ -103,10 +103,10 @@ const landingCss = `
 .landing-top { display: flex; align-items: center; justify-content: space-between;
   padding: 16px 32px; border-bottom: 1px solid var(--border-0); }
 .brand-mark { color: var(--accent); font-size: 14px; }
-.brand-name { font-weight: 600; letter-spacing: 0.18em; color: var(--text-0); font-size: 14px; }
+.brand-name { font-weight: 500; letter-spacing: 0.18em; color: var(--text-0); font-size: 14px; }
 .landing-hero { flex: 1; max-width: 880px; width: 100%; margin: 0 auto;
   padding: 88px 32px 40px; }
-.landing-h1 { font-size: 44px; line-height: 1.12; font-weight: 700; color: var(--text-0);
+.landing-h1 { font-size: 36px; line-height: 1.15; font-weight: 600; color: var(--text-0);
   margin: 18px 0 0; letter-spacing: -0.02em; }
 .landing-sub { max-width: 620px; margin-top: 20px; font-size: 15px; color: var(--text-2);
   line-height: 1.65; }
@@ -114,7 +114,7 @@ const landingCss = `
   margin-top: 64px; }
 .feature { padding: 18px; background: var(--bg-2); border: 1px solid var(--border-0);
   border-radius: var(--radius-lg); }
-.feature-title { font-size: 15px; font-weight: 600; color: var(--text-0); margin-top: 10px; }
+.feature-title { font-size: 14px; font-weight: 500; color: var(--text-0); margin-top: 10px; }
 .feature-desc { font-size: 13px; color: var(--text-2); margin: 8px 0 0; line-height: 1.6; }
 .landing-foot { padding: 20px 32px; border-top: 1px solid var(--border-0);
   font-size: 11px; letter-spacing: 0.1em; color: var(--text-3); }
