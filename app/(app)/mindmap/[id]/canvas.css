@@ -1,7 +1,8 @@
 .mm-shell {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 52px);
+  flex: 1;
+  min-height: 0;
 }
 .mm-bar {
   display: flex;

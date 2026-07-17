@@ -7,7 +7,7 @@ export default function SignupPage() {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="brand-name mono">Mobil</span>
+          <span className="brand-logo"><span className="brand-dot" />Mobil</span>
         </div>
         <div className="auth-panel">
           <h1 className="auth-h">Sign up</h1>

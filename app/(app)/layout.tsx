@@ -1,6 +1,8 @@
 import "./app.css";
 import { requireUser } from "@/lib/auth";
+import { AppHeader } from "./header";
 import { Sidebar } from "./sidebar";
+import { Shortcuts } from "./shortcuts";
 
 export default async function AppLayout({
   children,
@@ -10,13 +12,17 @@ export default async function AppLayout({
   const { email, profile } = await requireUser();
 
   return (
-    <div className="shell">
-      <Sidebar
+    <div className="app">
+      <AppHeader
         displayName={profile.display_name ?? ""}
         email={email}
         role={profile.role}
       />
-      <div className="main">{children}</div>
+      <div className="app-body">
+        <Sidebar role={profile.role} />
+        <main className="app-main">{children}</main>
+      </div>
+      <Shortcuts />
     </div>
   );
 }

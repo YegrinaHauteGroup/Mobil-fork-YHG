@@ -161,6 +161,20 @@ function Inner({
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
+  // Cmd/Ctrl+S 로 즉시 저장
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!canEdit) return;
+        if (timer.current) clearTimeout(timer.current);
+        persist();
+      }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [canEdit, persist]);
+
   const onConnect = useCallback(
     (c: Connection) => {
       if (!canEdit) return;

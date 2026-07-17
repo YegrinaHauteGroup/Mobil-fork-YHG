@@ -16,7 +16,7 @@ export default async function LandingPage() {
     <div className="landing">
       <header className="landing-top">
         <div className="row">
-          <span className="brand-name mono">Mobil</span>
+          <span className="brand-logo"><span className="brand-dot" />Mobil</span>
         </div>
         <div className="row">
           <Link href="/login" className="btn btn-ghost btn-sm">

@@ -148,6 +148,20 @@ export function DocumentEditor({
     };
   }, []);
 
+  // Cmd/Ctrl+S 로 즉시 저장
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        if (!canEdit) return;
+        if (timer.current) clearTimeout(timer.current);
+        persist(titleRef.current, editorRef.current);
+      }
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [canEdit, persist]);
+
   const manualSave = () => {
     if (timer.current) clearTimeout(timer.current);
     persist(title, editor);
