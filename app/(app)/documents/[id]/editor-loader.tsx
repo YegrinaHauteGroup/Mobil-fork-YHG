@@ -10,7 +10,7 @@ const DocumentEditor = dynamic(
     ssr: false,
     loading: () => (
       <div className="empty" style={{ padding: 40 }}>
-        에디터 로딩 중…
+        Loading editor…
       </div>
     ),
   }

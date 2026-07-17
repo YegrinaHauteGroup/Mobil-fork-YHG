@@ -289,12 +289,16 @@ a:hover {
 .badge {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  min-width: 44px;
   height: 20px;
   padding: 0 8px;
   font-family: var(--font-mono);
   font-size: 10px;
+  line-height: 1;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  white-space: nowrap;
   border-radius: 2px;
   border: 1px solid var(--border-2);
   color: var(--text-2);

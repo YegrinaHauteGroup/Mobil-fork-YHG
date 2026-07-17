@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type NavItem = { href: string; label: string; icon: string };
+type NavItem = { href: string; label: string };
 
 const MAIN: NavItem[] = [
-  { href: "/dashboard", label: "대시보드", icon: "▦" },
-  { href: "/files", label: "파일", icon: "▤" },
-  { href: "/documents", label: "문서", icon: "▧" },
-  { href: "/code", label: "코드", icon: "‹›" },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/files", label: "Files" },
+  { href: "/documents", label: "Documents" },
+  { href: "/code", label: "Code" },
+  { href: "/mindmap", label: "Mindmap" },
 ];
 
 export function Sidebar({
@@ -25,43 +26,39 @@ export function Sidebar({
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
-  const initial = (displayName || email || "?").charAt(0);
+  const initial = (displayName || email || "?").charAt(0).toUpperCase();
 
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <span className="brand-mark">◆</span>
-        <span className="brand-name mono">MOBIL</span>
+        <span className="brand-name">Mobil</span>
       </div>
 
       <nav className="nav">
-        <div className="nav-section label">WORKSPACE</div>
+        <div className="nav-section label">Workspace</div>
         {MAIN.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={`nav-link ${isActive(item.href) ? "active" : ""}`}
           >
-            <span className="ico">{item.icon}</span>
             {item.label}
           </Link>
         ))}
 
-        <div className="nav-section label">ADMIN</div>
+        <div className="nav-section label">Admin</div>
         <Link
           href="/admin/redeem"
           className={`nav-link ${isActive("/admin/redeem") ? "active" : ""}`}
         >
-          <span className="ico">◈</span>
-          코드 등록
+          Redeem Code
         </Link>
         {role === "admin" && (
           <Link
             href="/admin"
             className={`nav-link ${pathname === "/admin" ? "active" : ""}`}
           >
-            <span className="ico">⚙</span>
-            관리자 콘솔
+            Admin Console
           </Link>
         )}
       </nav>
@@ -87,7 +84,7 @@ export function Sidebar({
             className="btn btn-ghost btn-sm btn-block"
             style={{ marginTop: 8, justifyContent: "flex-start" }}
           >
-            로그아웃
+            Sign out
           </button>
         </form>
       </div>

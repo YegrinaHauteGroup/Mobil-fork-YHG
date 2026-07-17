@@ -13,7 +13,7 @@ const notoSans = Noto_Sans({
 
 export const metadata: Metadata = {
   title: "Mobil",
-  description: "개인 및 보안 업무를 위한 아이디어 저장소 — 파일과 문서를 한 곳에서",
+  description: "A private idea vault for personal and security work — files, documents and code in one place",
 };
 
 export default function RootLayout({

@@ -21,7 +21,7 @@ const CodeMirror = dynamic(
     ssr: false,
     loading: () => (
       <div className="empty" style={{ padding: 40 }}>
-        에디터 로딩 중…
+        Loading editor…
       </div>
     ),
   }
@@ -140,7 +140,7 @@ export function CodeEditor({
   };
 
   const onDelete = async () => {
-    if (!confirm("이 코드 파일을 삭제할까요? 되돌릴 수 없습니다.")) return;
+    if (!confirm("Delete this code file? This cannot be undone.")) return;
     const res = await deleteCodeFile(fileId);
     if (res.ok) router.push("/code");
     else setError(res.error);
@@ -163,10 +163,10 @@ export function CodeEditor({
 
   const stateLabel =
     saveState === "saving"
-      ? "저장 중…"
+      ? "Saving…"
       : saveState === "dirty"
-      ? "저장되지 않음"
-      : "저장됨";
+      ? "Unsaved"
+      : "Saved";
 
   return (
     <div className="code-shell">
@@ -176,7 +176,7 @@ export function CodeEditor({
             className="code-name"
             value={name}
             onChange={(e) => onName(e.target.value)}
-            placeholder="파일명 (예: app.py)"
+            placeholder="Filename (e.g. app.py)"
             disabled={!canEdit}
             spellCheck={false}
           />
@@ -206,18 +206,18 @@ export function CodeEditor({
             ● {stateLabel}
           </span>
           <button className="btn btn-sm" onClick={downloadCode}>
-            다운로드
+            Download
           </button>
           {isOwner && (
             <>
               <button className="btn btn-sm" onClick={togglePublic}>
-                {pub ? "공개됨" : "비공개"}
+                {pub ? "Public" : "Private"}
               </button>
               <button className="btn btn-sm" onClick={() => setShowShare(true)}>
-                공유
+                Share
               </button>
               <button className="btn btn-sm btn-danger" onClick={onDelete}>
-                삭제
+                Delete
               </button>
             </>
           )}
@@ -227,7 +227,7 @@ export function CodeEditor({
               onClick={manualSave}
               disabled={saveState === "saving"}
             >
-              저장
+              Save
             </button>
           )}
         </div>

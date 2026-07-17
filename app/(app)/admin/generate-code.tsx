@@ -5,9 +5,9 @@ import { Copyable } from "@/components/copyable";
 import { generateAdminCode } from "./actions";
 
 const EXPIRY_OPTIONS = [
-  { label: "무기한", hours: 0 },
-  { label: "24시간", hours: 24 },
-  { label: "7일", hours: 24 * 7 },
+  { label: "Never", hours: 0 },
+  { label: "24 hours", hours: 24 },
+  { label: "7 days", hours: 24 * 7 },
 ];
 
 export function GenerateCode() {
@@ -35,7 +35,7 @@ export function GenerateCode() {
 
       <div className="row" style={{ gap: 8, marginBottom: 14 }}>
         <div className="stack" style={{ gap: 6 }}>
-          <span className="label">만료</span>
+          <span className="label">Expiry</span>
           <select
             className="select"
             style={{ width: 140 }}
@@ -55,15 +55,14 @@ export function GenerateCode() {
           disabled={pending}
           style={{ alignSelf: "flex-end" }}
         >
-          {pending ? "발급 중…" : "코드 발급"}
+          {pending ? "Issuing…" : "Issue code"}
         </button>
       </div>
 
       {code && (
         <div>
           <div className="notice notice-info">
-            이 코드는 지금 한 번만 표시됩니다. 재조회할 수 없으니 안전한 곳에
-            보관하세요.
+            This code is shown only once and cannot be retrieved again — store it safely.
           </div>
           <Copyable value={code} label="ISSUED ADMIN CODE" />
         </div>

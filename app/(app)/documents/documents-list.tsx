@@ -36,23 +36,23 @@ export function DocumentsList({
         <input
           className="input"
           style={{ width: 240, height: 30 }}
-          placeholder="제목 검색…"
+          placeholder="Search title…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
       {docs.length === 0 ? (
-        <div className="empty">문서가 없습니다. “새 문서”로 첫 문서를 작성하세요.</div>
+        <div className="empty">No documents yet. Use “New document” to start.</div>
       ) : filtered.length === 0 ? (
-        <div className="empty">“{query}” 와 일치하는 문서가 없습니다.</div>
+        <div className="empty">No documents match “{query}”.</div>
       ) : (
         <table className="table">
           <thead>
             <tr>
-              <th>제목</th>
-              <th style={{ width: 90 }}>공개</th>
-              <th style={{ width: 60 }}>소유</th>
-              <th style={{ width: 180 }}>수정일</th>
+              <th>Title</th>
+              <th style={{ width: 90 }}>Visibility</th>
+              <th style={{ width: 60 }}>Owner</th>
+              <th style={{ width: 180 }}>Updated</th>
               <th style={{ width: 80 }}></th>
             </tr>
           </thead>
@@ -71,7 +71,7 @@ export function DocumentsList({
                 </td>
                 <td>
                   <span className="badge">
-                    {d.owner_id === userId ? "나" : "공유"}
+                    {d.owner_id === userId ? "Mine" : "Shared"}
                   </span>
                 </td>
                 <td className="mono muted" style={{ fontSize: 12 }}>
@@ -79,7 +79,7 @@ export function DocumentsList({
                 </td>
                 <td>
                   <Link href={`/documents/${d.id}`} className="btn btn-ghost btn-sm">
-                    열기
+                    Open
                   </Link>
                 </td>
               </tr>

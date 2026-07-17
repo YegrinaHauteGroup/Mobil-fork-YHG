@@ -4,52 +4,46 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/format";
 
-type CodeRow = {
+type MapRow = {
   id: string;
   owner_id: string;
-  name: string;
-  language: string;
+  title: string;
   is_public: boolean;
   updated_at: string;
 };
 
-export function CodeList({ files, userId }: { files: CodeRow[]; userId: string }) {
+export function MindMapList({ maps, userId }: { maps: MapRow[]; userId: string }) {
   const [query, setQuery] = useState("");
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return files;
-    return files.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.language.toLowerCase().includes(q)
-    );
-  }, [files, query]);
+    if (!q) return maps;
+    return maps.filter((m) => (m.title || "").toLowerCase().includes(q));
+  }, [maps, query]);
 
   return (
     <div className="panel">
       <div className="panel-header">
         <span className="label">
-          CODE FILES ({filtered.length}
-          {query ? ` / ${files.length}` : ""})
+          MAPS ({filtered.length}
+          {query ? ` / ${maps.length}` : ""})
         </span>
         <input
           className="input"
           style={{ width: 240, height: 30 }}
-          placeholder="Search filename or language…"
+          placeholder="Search title…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
-      {files.length === 0 ? (
-        <div className="empty">No code files yet. Use “New code file” to start.</div>
+      {maps.length === 0 ? (
+        <div className="empty">No maps yet. Use “New map” to start.</div>
       ) : filtered.length === 0 ? (
-        <div className="empty">No files match “{query}”.</div>
+        <div className="empty">No maps match “{query}”.</div>
       ) : (
         <table className="table">
           <thead>
             <tr>
-              <th>Filename</th>
-              <th style={{ width: 130 }}>Language</th>
+              <th>Title</th>
               <th style={{ width: 90 }}>Visibility</th>
               <th style={{ width: 60 }}>Owner</th>
               <th style={{ width: 180 }}>Updated</th>
@@ -57,31 +51,26 @@ export function CodeList({ files, userId }: { files: CodeRow[]; userId: string }
             </tr>
           </thead>
           <tbody>
-            {filtered.map((c) => (
-              <tr key={c.id}>
-                <td className="mono">
-                  <Link href={`/code/${c.id}`}>{c.name}</Link>
-                </td>
-                <td className="mono muted" style={{ fontSize: 12 }}>
-                  {c.language}
+            {filtered.map((m) => (
+              <tr key={m.id}>
+                <td>
+                  <Link href={`/mindmap/${m.id}`}>{m.title || "Untitled map"}</Link>
                 </td>
                 <td>
-                  {c.is_public ? (
+                  {m.is_public ? (
                     <span className="badge badge-ok">public</span>
                   ) : (
                     <span className="badge">private</span>
                   )}
                 </td>
                 <td>
-                  <span className="badge">
-                    {c.owner_id === userId ? "Mine" : "Shared"}
-                  </span>
+                  <span className="badge">{m.owner_id === userId ? "Mine" : "Shared"}</span>
                 </td>
                 <td className="mono muted" style={{ fontSize: 12 }}>
-                  {formatDate(c.updated_at)}
+                  {formatDate(m.updated_at)}
                 </td>
                 <td>
-                  <Link href={`/code/${c.id}`} className="btn btn-ghost btn-sm">
+                  <Link href={`/mindmap/${m.id}`} className="btn btn-ghost btn-sm">
                     Open
                   </Link>
                 </td>

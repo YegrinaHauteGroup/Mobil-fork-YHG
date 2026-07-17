@@ -1,41 +1,42 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { createDocument } from "./actions";
-import { DocumentsList } from "./documents-list";
+import { createMindMap } from "./actions";
+import { MindMapList } from "./mindmap-list";
 
 export const dynamic = "force-dynamic";
 
-export default async function DocumentsPage() {
+export default async function MindMapPage() {
   const { userId } = await requireUser();
   const supabase = await createClient();
 
-  const { data: docs } = await supabase
-    .from("documents")
+  const { data: maps } = await supabase
+    .from("mind_maps")
     .select("id, owner_id, title, is_public, updated_at")
     .order("updated_at", { ascending: false });
 
   return (
     <>
       <div className="topbar">
-        <span className="topbar-title">Documents</span>
-        <span className="crumb">WORKSPACE / DOCUMENTS</span>
+        <span className="topbar-title">Mindmap</span>
+        <span className="crumb">WORKSPACE / MINDMAP</span>
       </div>
       <div className="content">
         <div className="page-head">
           <div>
-            <h1 className="page-h">Documents</h1>
+            <h1 className="page-h">Mindmap</h1>
             <p className="page-sub">
-              Your own and shared documents. Content is stored as structured JSON.
+              Arrange files, code and documents as nodes and connect them with
+              parent-child links on a free-form canvas.
             </p>
           </div>
-          <form action={createDocument}>
+          <form action={createMindMap}>
             <button type="submit" className="btn btn-primary">
-              New document
+              New map
             </button>
           </form>
         </div>
 
-        <DocumentsList docs={docs ?? []} userId={userId} />
+        <MindMapList maps={maps ?? []} userId={userId} />
       </div>
     </>
   );

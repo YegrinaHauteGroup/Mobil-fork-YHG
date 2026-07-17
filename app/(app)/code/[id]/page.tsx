@@ -41,7 +41,7 @@ export default async function CodeFilePage({
       <div className="topbar">
         <div className="row" style={{ gap: 12 }}>
           <Link href="/code" className="btn btn-ghost btn-sm">
-            ← 코드
+            ← Code
           </Link>
           <span className="crumb">
             WORKSPACE / CODE / {file.id.slice(0, 8)}

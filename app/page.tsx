@@ -16,15 +16,14 @@ export default async function LandingPage() {
     <div className="landing">
       <header className="landing-top">
         <div className="row">
-          <span className="brand-mark">◆</span>
-          <span className="brand-name mono">MOBIL</span>
+          <span className="brand-name mono">Mobil</span>
         </div>
         <div className="row">
           <Link href="/login" className="btn btn-ghost btn-sm">
-            로그인
+            Sign in
           </Link>
           <Link href="/signup" className="btn btn-primary btn-sm">
-            시작하기
+            Get started
           </Link>
         </div>
       </header>
@@ -32,45 +31,45 @@ export default async function LandingPage() {
       <main className="landing-hero">
         <span className="label">SECURE IDEA VAULT / SELF-HOSTED SaaS</span>
         <h1 className="landing-h1">
-          아이디어와 자료를
+          Manage your ideas
           <br />
-          한 곳에서 관리하는 저장소
+          and assets in one place
         </h1>
         <p className="landing-sub">
-          개인 및 사적, 보안 업무를 위한 작업 공간. 파일을 저장하고, 문서를
-          작성·편집하고, 세밀한 권한으로 공유하세요. 모든 데이터는 행 단위 보안
-          정책(RLS)으로 격리됩니다.
+          A private workspace for personal and security work. Store files, write
+          and edit documents and code, and share with fine-grained permissions.
+          Every row is isolated by row-level security (RLS).
         </p>
         <div className="row" style={{ marginTop: 28 }}>
           <Link href="/signup" className="btn btn-primary">
-            계정 만들기
+            Create account
           </Link>
           <Link href="/login" className="btn">
-            기존 계정으로 로그인
+            Sign in
           </Link>
         </div>
 
         <div className="landing-grid">
           <FeatureCard
             tag="STORAGE"
-            title="파일 저장소"
-            desc="업로드 · 다운로드 · 공유. 서명된 URL과 버킷 정책으로 접근을 통제합니다."
+            title="File storage"
+            desc="Upload, download, share. Access is controlled by signed URLs and bucket policies."
           />
           <FeatureCard
             tag="DOCS"
-            title="문서 편집기"
-            desc="구조화된 JSON 기반 에디터. 자동 저장과 수동 저장을 모두 지원합니다."
+            title="Editor"
+            desc="Rich JSON-based editor with images, video, colors and checklists. Auto and manual save."
           />
           <FeatureCard
             tag="ACCESS"
-            title="권한 관리"
-            desc="사용자별 view / edit 권한. 관리자는 별도 코드로 승격됩니다."
+            title="Access control"
+            desc="Per-user view / edit permissions. Admins are elevated via a separate code."
           />
         </div>
       </main>
 
       <footer className="landing-foot mono">
-        MOBIL — DEPLOYMENT ARCHIVE FOR INFRASTRUCTURE
+        Mobil — Deployment Archive for Infrastructure
       </footer>
 
       <style>{landingCss}</style>

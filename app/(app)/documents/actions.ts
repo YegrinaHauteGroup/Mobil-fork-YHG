@@ -22,7 +22,7 @@ export async function createDocument(): Promise<void> {
     .single();
 
   if (error || !data) {
-    throw new Error("문서 생성에 실패했습니다.");
+    throw new Error("Failed to create document.");
   }
 
   await supabase.from("audit_logs").insert({
@@ -45,14 +45,14 @@ export async function saveDocument(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "인증이 필요합니다." };
+  if (!user) return { ok: false, error: "Authentication required." };
 
   const { error } = await supabase
     .from("documents")
     .update({ title: title.trim() || "Untitled", content })
     .eq("id", id);
 
-  if (error) return { ok: false, error: "저장에 실패했습니다." };
+  if (error) return { ok: false, error: "Save failed." };
 
   await supabase.from("audit_logs").insert({
     user_id: user.id,
@@ -68,7 +68,7 @@ export async function saveDocument(
 export async function deleteDocument(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("documents").delete().eq("id", id);
-  if (error) return { ok: false, error: "삭제에 실패했습니다." };
+  if (error) return { ok: false, error: "Delete failed." };
   revalidatePath("/documents");
   return { ok: true };
 }
@@ -83,7 +83,7 @@ export async function setDocumentPublic(
     .from("documents")
     .update({ is_public: isPublic })
     .eq("id", id);
-  if (error) return { ok: false, error: "변경에 실패했습니다." };
+  if (error) return { ok: false, error: "Update failed." };
   revalidatePath(`/documents/${id}`);
   return { ok: true };
 }
@@ -97,16 +97,16 @@ export async function shareDocument(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "인증이 필요합니다." };
+  if (!user) return { ok: false, error: "Authentication required." };
 
   const id = recipientId.trim();
   const uuidRe =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRe.test(id)) {
-    return { ok: false, error: "올바른 공유 ID(UUID) 형식이 아닙니다." };
+    return { ok: false, error: "Not a valid Share ID (UUID)." };
   }
   if (id === user.id) {
-    return { ok: false, error: "자기 자신에게는 공유할 수 없습니다." };
+    return { ok: false, error: "You can't share with yourself." };
   }
 
   const { error } = await supabase.from("document_permissions").upsert(
@@ -123,7 +123,7 @@ export async function shareDocument(
     return {
       ok: false,
       error:
-        "권한 부여에 실패했습니다. 공유 ID가 존재하는 사용자인지 확인하세요.",
+        "Failed to grant access. Check that the Share ID belongs to an existing user.",
     };
   }
 
@@ -139,7 +139,7 @@ export async function revokeDocumentShare(
     .from("document_permissions")
     .delete()
     .eq("id", permissionId);
-  if (error) return { ok: false, error: "회수에 실패했습니다." };
+  if (error) return { ok: false, error: "Failed to revoke." };
   return { ok: true };
 }
 

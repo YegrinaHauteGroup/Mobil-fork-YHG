@@ -42,7 +42,7 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
         />
       </div>
       <button type="submit" className="btn btn-primary btn-block" disabled={pending}>
-        {pending ? "확인 중…" : "로그인"}
+        {pending ? "Signing in…" : "Sign in"}
       </button>
     </form>
   );

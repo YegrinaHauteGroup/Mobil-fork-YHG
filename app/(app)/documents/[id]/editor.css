@@ -181,3 +181,84 @@
   height: 0;
   pointer-events: none;
 }
+.ProseMirror a {
+  color: var(--steel-hover);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.ProseMirror mark {
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.ProseMirror img.doc-media,
+.ProseMirror video.doc-video {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius);
+  margin: 6px 0;
+  display: block;
+}
+.ProseMirror img.ProseMirror-selectednode,
+.ProseMirror video.ProseMirror-selectednode {
+  outline: 2px solid var(--steel);
+}
+/* task list (checkbox) */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 4px;
+}
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.ProseMirror ul[data-type="taskList"] li > label {
+  margin-top: 3px;
+  user-select: none;
+}
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1;
+  min-width: 0;
+}
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+}
+
+/* toolbar color controls */
+.tool-color {
+  position: relative;
+  width: 30px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--text-2);
+  cursor: pointer;
+  overflow: hidden;
+}
+.tool-color:hover {
+  background: var(--bg-3);
+  color: var(--text-0);
+}
+.tool-color input[type="color"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+.tool-swatch {
+  position: absolute;
+  bottom: 3px;
+  left: 6px;
+  right: 6px;
+  height: 3px;
+  border-radius: 2px;
+}

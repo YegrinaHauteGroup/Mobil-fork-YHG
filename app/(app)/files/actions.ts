@@ -19,13 +19,13 @@ export async function getSignedUrl(
     .eq("id", fileId)
     .single();
 
-  if (error || !file) return { error: "파일을 찾을 수 없습니다." };
+  if (error || !file) return { error: "File not found." };
 
   const { data: signed, error: signErr } = await supabase.storage
     .from(BUCKET)
     .createSignedUrl(file.storage_path, 60, { download: true });
 
-  if (signErr || !signed) return { error: "다운로드 링크 생성에 실패했습니다." };
+  if (signErr || !signed) return { error: "Failed to create download link." };
 
   const {
     data: { user },
@@ -48,8 +48,8 @@ export async function renameFile(
   newName: string
 ): Promise<ActionResult> {
   const name = newName.trim();
-  if (!name) return { ok: false, error: "이름을 입력하세요." };
-  if (name.length > 255) return { ok: false, error: "이름이 너무 깁니다." };
+  if (!name) return { ok: false, error: "Enter a name." };
+  if (name.length > 255) return { ok: false, error: "Name is too long." };
 
   const supabase = await createClient();
   const { error } = await supabase
@@ -57,7 +57,7 @@ export async function renameFile(
     .update({ file_name: name })
     .eq("id", fileId);
 
-  if (error) return { ok: false, error: "이름 변경에 실패했습니다." };
+  if (error) return { ok: false, error: "Rename failed." };
   revalidatePath("/files");
   return { ok: true };
 }
@@ -72,14 +72,14 @@ export async function deleteFile(fileId: string): Promise<ActionResult> {
     .eq("id", fileId)
     .single();
 
-  if (error || !file) return { ok: false, error: "파일을 찾을 수 없습니다." };
+  if (error || !file) return { ok: false, error: "File not found." };
 
   const { error: storageErr } = await supabase.storage
     .from(BUCKET)
     .remove([file.storage_path]);
 
   if (storageErr) {
-    return { ok: false, error: "스토리지 삭제에 실패했습니다." };
+    return { ok: false, error: "Storage delete failed." };
   }
 
   const { error: rowErr } = await supabase
@@ -87,7 +87,7 @@ export async function deleteFile(fileId: string): Promise<ActionResult> {
     .delete()
     .eq("id", fileId);
 
-  if (rowErr) return { ok: false, error: "메타데이터 삭제에 실패했습니다." };
+  if (rowErr) return { ok: false, error: "Failed to delete metadata." };
 
   const {
     data: { user },
@@ -115,16 +115,16 @@ export async function shareFile(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { ok: false, error: "인증이 필요합니다." };
+  if (!user) return { ok: false, error: "Authentication required." };
 
   const id = recipientId.trim();
   const uuidRe =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRe.test(id)) {
-    return { ok: false, error: "올바른 공유 ID(UUID) 형식이 아닙니다." };
+    return { ok: false, error: "Not a valid Share ID (UUID)." };
   }
   if (id === user.id) {
-    return { ok: false, error: "자기 자신에게는 공유할 수 없습니다." };
+    return { ok: false, error: "You can't share with yourself." };
   }
 
   const { error } = await supabase.from("file_permissions").upsert(
@@ -141,7 +141,7 @@ export async function shareFile(
     return {
       ok: false,
       error:
-        "권한 부여에 실패했습니다. 공유 ID가 존재하는 사용자인지 확인하세요.",
+        "Failed to grant access. Check that the Share ID belongs to an existing user.",
     };
   }
 
@@ -159,7 +159,7 @@ export async function revokeFileShare(
     .delete()
     .eq("id", permissionId);
 
-  if (error) return { ok: false, error: "회수에 실패했습니다." };
+  if (error) return { ok: false, error: "Failed to revoke." };
   revalidatePath("/files");
   return { ok: true };
 }

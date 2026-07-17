@@ -15,7 +15,7 @@ export function RedeemForm() {
     return (
       <div>
         <div className="notice notice-ok">
-          관리자 권한이 부여되었습니다. 이제 관리자 콘솔을 사용할 수 있습니다.
+          Admin privileges granted. You can now use the admin console.
         </div>
         <button
           className="btn btn-primary"
@@ -24,7 +24,7 @@ export function RedeemForm() {
             router.refresh();
           }}
         >
-          관리자 콘솔로 이동
+          Go to admin console
         </button>
       </div>
     );
@@ -44,13 +44,13 @@ export function RedeemForm() {
           name="code"
           type="text"
           className="input mono"
-          placeholder="관리자 코드를 입력"
+          placeholder="Enter admin code"
           autoComplete="off"
           required
         />
       </div>
       <button type="submit" className="btn btn-primary" disabled={pending}>
-        {pending ? "확인 중…" : "권한 승격"}
+        {pending ? "Checking…" : "Elevate"}
       </button>
     </form>
   );

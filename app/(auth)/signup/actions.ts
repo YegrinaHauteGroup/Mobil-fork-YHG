@@ -17,10 +17,10 @@ export async function signup(
   const displayName = String(formData.get("display_name") || "").trim();
 
   if (!email || !password) {
-    return { error: "이메일과 비밀번호를 입력하세요." };
+    return { error: "Enter email and password." };
   }
   if (password.length < 8) {
-    return { error: "비밀번호는 8자 이상이어야 합니다." };
+    return { error: "Password must be at least 8 characters." };
   }
 
   const supabase = await createClient();
@@ -34,9 +34,9 @@ export async function signup(
 
   if (error) {
     if (error.message.toLowerCase().includes("already")) {
-      return { error: "이미 가입된 이메일입니다." };
+      return { error: "This email is already registered." };
     }
-    return { error: "가입에 실패했습니다. 잠시 후 다시 시도하세요." };
+    return { error: "Sign-up failed. Please try again shortly." };
   }
 
   // 세션이 즉시 발급되면(이메일 확인 비활성) 바로 대시보드로.

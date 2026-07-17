@@ -138,6 +138,50 @@ export interface Database {
         };
         Relationships: [];
       };
+      mind_maps: {
+        Row: {
+          id: string;
+          owner_id: string;
+          title: string;
+          data: Json;
+          is_public: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          title?: string;
+          data?: Json;
+          is_public?: boolean;
+        };
+        Update: {
+          title?: string;
+          data?: Json;
+          is_public?: boolean;
+        };
+        Relationships: [];
+      };
+      mind_map_permissions: {
+        Row: {
+          id: string;
+          mind_map_id: string;
+          user_id: string;
+          permission: Permission;
+          granted_by: string;
+          granted_at: string;
+        };
+        Insert: {
+          mind_map_id: string;
+          user_id: string;
+          permission: Permission;
+          granted_by: string;
+        };
+        Update: {
+          permission?: Permission;
+        };
+        Relationships: [];
+      };
       files: {
         Row: {
           id: string;

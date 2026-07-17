@@ -11,7 +11,7 @@ export async function generateAdminCode(
   });
 
   if (error || !data) {
-    return { error: "코드 발급에 실패했습니다. 관리자 권한을 확인하세요." };
+    return { error: "Failed to issue code. Check admin privileges." };
   }
   return { code: data as string };
 }

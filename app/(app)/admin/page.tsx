@@ -32,22 +32,22 @@ export default async function AdminConsolePage() {
   return (
     <>
       <div className="topbar">
-        <span className="topbar-title">관리자 콘솔</span>
+        <span className="topbar-title">Admin Console</span>
         <span className="crumb">ADMIN / CONSOLE</span>
       </div>
       <div className="content">
         <div className="page-head">
           <div>
-            <h1 className="page-h">관리자 콘솔</h1>
+            <h1 className="page-h">Admin Console</h1>
             <p className="page-sub">
-              관리자 코드 발급, 사용자 및 감사 로그 조회.
+              Issue admin codes; browse users and audit logs.
             </p>
           </div>
         </div>
 
         <div className="panel" style={{ marginBottom: 24 }}>
           <div className="panel-header">
-            <span className="label">ADMIN CODE 발급</span>
+            <span className="label">ISSUE ADMIN CODE</span>
           </div>
           <div className="panel-body">
             <GenerateCode />
@@ -56,15 +56,15 @@ export default async function AdminConsolePage() {
 
         <div className="panel" style={{ marginBottom: 24 }}>
           <div className="panel-header">
-            <span className="label">사용자 ({users.length})</span>
+            <span className="label">USERS ({users.length})</span>
           </div>
           <table className="table">
             <thead>
               <tr>
-                <th>이메일</th>
-                <th>이름</th>
-                <th style={{ width: 90 }}>권한</th>
-                <th style={{ width: 180 }}>가입일</th>
+                <th>Email</th>
+                <th>Name</th>
+                <th style={{ width: 90 }}>Role</th>
+                <th style={{ width: 180 }}>Joined</th>
               </tr>
             </thead>
             <tbody>
@@ -92,18 +92,18 @@ export default async function AdminConsolePage() {
 
         <div className="panel">
           <div className="panel-header">
-            <span className="label">최근 감사 로그 ({logs.length})</span>
+            <span className="label">RECENT AUDIT LOGS ({logs.length})</span>
           </div>
           {logs.length === 0 ? (
-            <div className="empty">감사 로그가 없습니다.</div>
+            <div className="empty">No audit logs.</div>
           ) : (
             <table className="table">
               <thead>
                 <tr>
-                  <th style={{ width: 90 }}>액션</th>
-                  <th style={{ width: 100 }}>대상</th>
-                  <th>대상 ID</th>
-                  <th style={{ width: 180 }}>시각</th>
+                  <th style={{ width: 90 }}>Action</th>
+                  <th style={{ width: 100 }}>Target</th>
+                  <th>Target ID</th>
+                  <th style={{ width: 180 }}>Time</th>
                 </tr>
               </thead>
               <tbody>

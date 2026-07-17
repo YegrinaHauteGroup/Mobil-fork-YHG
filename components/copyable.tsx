@@ -27,7 +27,7 @@ export function Copyable({
       <div className="row" style={{ gap: 8 }}>
         <code className="code-block grow">{value}</code>
         <button type="button" className="btn btn-sm" onClick={copy}>
-          {copied ? "복사됨" : "복사"}
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
     </div>

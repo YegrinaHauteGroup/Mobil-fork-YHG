@@ -12,8 +12,8 @@ export function SignupForm() {
   if (state && "ok" in state && state.needsConfirmation) {
     return (
       <div className="notice notice-ok">
-        확인 메일을 발송했습니다. 메일함의 링크를 눌러 가입을 완료한 뒤
-        로그인하세요.
+        A confirmation email was sent. Click the link to finish signing up,
+        then sign in.
       </div>
     );
   }
@@ -33,7 +33,7 @@ export function SignupForm() {
           type="text"
           className="input"
           autoComplete="nickname"
-          placeholder="표시할 이름 (선택)"
+          placeholder="Display name (optional)"
         />
       </div>
       <div className="field">
@@ -60,7 +60,7 @@ export function SignupForm() {
           type="password"
           className="input"
           autoComplete="new-password"
-          placeholder="8자 이상"
+          placeholder="At least 8 characters"
           minLength={8}
           required
         />
@@ -70,7 +70,7 @@ export function SignupForm() {
         className="btn btn-primary btn-block"
         disabled={pending}
       >
-        {pending ? "생성 중…" : "계정 만들기"}
+        {pending ? "Creating…" : "Create account"}
       </button>
     </form>
   );

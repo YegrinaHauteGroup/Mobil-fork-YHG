@@ -1,0 +1,153 @@
+.mm-shell {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 52px);
+}
+.mm-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border-0);
+  background: var(--bg-1);
+  flex-wrap: wrap;
+}
+.mm-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.mm-title {
+  min-width: 0;
+  flex: 1;
+  max-width: 320px;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-0);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  outline: none;
+}
+.mm-title:hover:not(:disabled) {
+  border-color: var(--border-1);
+}
+.mm-title:focus {
+  border-color: var(--steel);
+  background: var(--bg-0);
+}
+.mm-canvas {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  background: var(--bg-0);
+}
+
+/* React Flow dark surface tuning */
+.mm-canvas .react-flow__background {
+  background: var(--bg-0);
+}
+.mm-canvas .react-flow__attribution {
+  display: none;
+}
+.mm-canvas .react-flow__controls button {
+  background: var(--bg-3);
+  border-bottom: 1px solid var(--border-1);
+  color: var(--text-1);
+  fill: var(--text-1);
+}
+.mm-canvas .react-flow__controls button:hover {
+  background: var(--bg-4);
+}
+.mm-canvas .react-flow__minimap {
+  background: var(--bg-2);
+}
+.mm-canvas .react-flow__edge-path {
+  stroke: var(--border-2);
+  stroke-width: 1.5;
+}
+.mm-canvas .react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--steel);
+}
+.mm-canvas .react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background: var(--steel);
+  border: 1px solid var(--bg-0);
+}
+
+/* custom nodes */
+.mm-node {
+  border-radius: var(--radius);
+  border: 1px solid var(--border-2);
+  background: var(--bg-2);
+  color: var(--text-1);
+  font-size: 12.5px;
+  min-width: 120px;
+  max-width: 240px;
+}
+.mm-node.selected {
+  border-color: var(--steel);
+  box-shadow: 0 0 0 1px var(--steel);
+}
+.mm-note {
+  padding: 4px;
+}
+.mm-note textarea {
+  width: 100%;
+  min-height: 44px;
+  resize: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-1);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  line-height: 1.4;
+  padding: 4px 6px;
+}
+.mm-ref {
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.mm-ref .mm-kind {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-hover);
+}
+.mm-ref.k-code .mm-kind {
+  color: var(--steel-hover);
+}
+.mm-ref.k-document .mm-kind {
+  color: var(--ok);
+}
+.mm-ref .mm-label {
+  color: var(--text-0);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  word-break: break-all;
+}
+.mm-ref a.mm-label:hover {
+  text-decoration: underline;
+}
+
+.mm-picker {
+  height: 30px;
+  max-width: 220px;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--text-1);
+  background: var(--bg-3);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius);
+  outline: none;
+}

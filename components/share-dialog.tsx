@@ -68,20 +68,20 @@ export function ShareDialog({
   };
 
   return (
-    <Modal title={`공유 — ${targetLabel}`} onClose={onClose} width={520}>
+    <Modal title={`Share — ${targetLabel}`} onClose={onClose} width={520}>
       {error && <div className="notice notice-error">{error}</div>}
 
       <div style={{ marginBottom: 18 }}>
-        <Copyable value={myShareId} label="내 공유 ID (상대에게 전달)" />
+        <Copyable value={myShareId} label="My Share ID (give to the other user)" />
       </div>
 
       <div className="label" style={{ marginBottom: 6 }}>
-        사용자에게 권한 부여
+        Grant access to a user
       </div>
       <div className="row" style={{ gap: 8, alignItems: "stretch" }}>
         <input
           className="input grow"
-          placeholder="상대방의 공유 ID (UUID)"
+          placeholder="Recipient's Share ID (UUID)"
           value={recipient}
           onChange={(e) => setRecipient(e.target.value)}
         />
@@ -91,24 +91,24 @@ export function ShareDialog({
           value={permission}
           onChange={(e) => setPermission(e.target.value as "view" | "edit")}
         >
-          <option value="view">읽기</option>
-          <option value="edit">편집</option>
+          <option value="view">View</option>
+          <option value="edit">Edit</option>
         </select>
         <button
           className="btn btn-primary"
           onClick={submit}
           disabled={pending || !recipient.trim()}
         >
-          부여
+          Grant
         </button>
       </div>
 
       <div className="label" style={{ margin: "20px 0 8px" }}>
-        공유 중 ({shares.length})
+        Shared with ({shares.length})
       </div>
       {shares.length === 0 ? (
         <div className="empty" style={{ padding: "20px 0" }}>
-          아직 공유된 사용자가 없습니다.
+          Not shared with anyone yet.
         </div>
       ) : (
         <table className="table">
@@ -120,7 +120,7 @@ export function ShareDialog({
                 </td>
                 <td style={{ width: 70 }}>
                   <span className="badge">
-                    {s.permission === "edit" ? "편집" : "읽기"}
+                    {s.permission === "edit" ? "Edit" : "View"}
                   </span>
                 </td>
                 <td style={{ width: 60 }}>
@@ -129,7 +129,7 @@ export function ShareDialog({
                     onClick={() => revoke(s.id)}
                     disabled={pending}
                   >
-                    회수
+                    Revoke
                   </button>
                 </td>
               </tr>

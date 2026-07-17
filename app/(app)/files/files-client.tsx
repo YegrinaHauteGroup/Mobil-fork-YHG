@@ -75,7 +75,7 @@ export function FilesClient({
             contentType: file.type || undefined,
             upsert: false,
           });
-        if (upErr) throw new Error(`업로드 실패: ${file.name}`);
+        if (upErr) throw new Error(`Upload failed: ${file.name}`);
 
         const { error: metaErr } = await supabase.from("files").insert({
           id: fileId,
@@ -88,7 +88,7 @@ export function FilesClient({
 
         if (metaErr) {
           await supabase.storage.from(BUCKET).remove([path]);
-          throw new Error(`메타데이터 기록 실패: ${file.name}`);
+          throw new Error(`Failed to record metadata: ${file.name}`);
         }
 
         await supabase.from("audit_logs").insert({
@@ -100,7 +100,7 @@ export function FilesClient({
       }
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "업로드 중 오류가 발생했습니다.");
+      setError(e instanceof Error ? e.message : "Upload failed.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -139,7 +139,7 @@ export function FilesClient({
 
   const rename = (row: FileRow) =>
     start(async () => {
-      const next = window.prompt("새 파일 이름", row.file_name);
+      const next = window.prompt("New file name", row.file_name);
       if (next == null || next.trim() === "" || next === row.file_name) return;
       const res = await renameFile(row.id, next);
       if (!res.ok) setError(res.error);
@@ -148,7 +148,7 @@ export function FilesClient({
 
   const remove = (row: FileRow) =>
     start(async () => {
-      if (!confirm(`"${row.file_name}" 을(를) 삭제할까요? 되돌릴 수 없습니다.`))
+      if (!confirm(`Delete "${row.file_name}"? This cannot be undone.`))
         return;
       const res = await deleteFile(row.id);
       if (!res.ok) setError(res.error);
@@ -165,10 +165,9 @@ export function FilesClient({
     >
       <div className="page-head">
         <div>
-          <h1 className="page-h">파일 저장소</h1>
+          <h1 className="page-h">File Storage</h1>
           <p className="page-sub">
-            본인 소유 및 공유받은 파일. 파일을 이 영역에 끌어다 놓아 업로드할 수
-            있습니다.
+            Your own and shared files. Drag & drop files here to upload.
           </p>
         </div>
         <div className="row">
@@ -184,7 +183,7 @@ export function FilesClient({
             onClick={onPick}
             disabled={uploading}
           >
-            {uploading ? "업로드 중…" : "파일 업로드"}
+            {uploading ? "Uploading…" : "Upload"}
           </button>
         </div>
       </div>
@@ -200,27 +199,26 @@ export function FilesClient({
           <input
             className="input"
             style={{ width: 240, height: 30 }}
-            placeholder="이름·유형 검색…"
+            placeholder="Search name or type…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
         {initialFiles.length === 0 ? (
           <div className="empty">
-            저장된 파일이 없습니다. “파일 업로드” 또는 드래그 앤 드롭으로
-            시작하세요.
+            No files yet. Use “Upload” or drag & drop to get started.
           </div>
         ) : filtered.length === 0 ? (
-          <div className="empty">“{query}” 와 일치하는 파일이 없습니다.</div>
+          <div className="empty">No files match “{query}”.</div>
         ) : (
           <table className="table">
             <thead>
               <tr>
-                <th>이름</th>
-                <th style={{ width: 120 }}>유형</th>
-                <th style={{ width: 100 }}>크기</th>
-                <th style={{ width: 160 }}>업로드</th>
-                <th style={{ width: 60 }}>소유</th>
+                <th>Name</th>
+                <th style={{ width: 120 }}>Type</th>
+                <th style={{ width: 100 }}>Size</th>
+                <th style={{ width: 160 }}>Uploaded</th>
+                <th style={{ width: 60 }}>Owner</th>
                 <th style={{ width: 280 }}></th>
               </tr>
             </thead>
@@ -238,7 +236,7 @@ export function FilesClient({
                       {formatDate(f.created_at)}
                     </td>
                     <td>
-                      <span className="badge">{owned ? "나" : "공유"}</span>
+                      <span className="badge">{owned ? "Mine" : "Shared"}</span>
                     </td>
                     <td>
                       <div className="row" style={{ gap: 4 }}>
@@ -247,7 +245,7 @@ export function FilesClient({
                           onClick={() => download(f.id)}
                           disabled={pending}
                         >
-                          다운로드
+                          Download
                         </button>
                         {owned && (
                           <>
@@ -256,20 +254,20 @@ export function FilesClient({
                               onClick={() => rename(f)}
                               disabled={pending}
                             >
-                              이름변경
+                              Rename
                             </button>
                             <button
                               className="btn btn-ghost btn-sm"
                               onClick={() => setShareTarget(f)}
                             >
-                              공유
+                              Share
                             </button>
                             <button
                               className="btn btn-ghost btn-sm btn-danger"
                               onClick={() => remove(f)}
                               disabled={pending}
                             >
-                              삭제
+                              Delete
                             </button>
                           </>
                         )}
@@ -287,7 +285,7 @@ export function FilesClient({
         <div className="dropzone">
           <div className="dropzone-inner">
             <div className="dropzone-icon">⬇</div>
-            여기에 놓아 업로드
+            Drop to upload
           </div>
         </div>
       )}

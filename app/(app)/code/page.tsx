@@ -19,21 +19,20 @@ export default async function CodePage() {
   return (
     <>
       <div className="topbar">
-        <span className="topbar-title">코드</span>
+        <span className="topbar-title">Code</span>
         <span className="crumb">WORKSPACE / CODE</span>
       </div>
       <div className="content">
         <div className="page-head">
           <div>
-            <h1 className="page-h">코드</h1>
+            <h1 className="page-h">Code</h1>
             <p className="page-sub">
-              웹에서 코드를 작성·편집합니다. 구문 강조와 자동/수동 저장을
-              지원합니다.
+              Write and edit code in the browser — syntax highlighting, auto and manual save.
             </p>
           </div>
           <form action={createCodeFile}>
             <button type="submit" className="btn btn-primary">
-              새 코드 파일
+              New code file
             </button>
           </form>
         </div>

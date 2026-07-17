@@ -18,7 +18,7 @@ export default async function FilesPage() {
   return (
     <>
       <div className="topbar">
-        <span className="topbar-title">파일</span>
+        <span className="topbar-title">Files</span>
         <span className="crumb">WORKSPACE / FILES</span>
       </div>
       <div className="content">
