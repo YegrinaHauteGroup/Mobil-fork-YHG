@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import type { Json } from "@/lib/database.types";
 import type { WorkspaceItem } from "../actions";
 
-// React Flow 는 브라우저 전용 → ssr:false 로 지연 로딩.
+// Mind Elixir 는 브라우저 전용(DOM 직접 조작) → ssr:false 로 지연 로딩.
 const MindMapCanvas = dynamic(
   () => import("./canvas").then((m) => m.MindMapCanvas),
   {
