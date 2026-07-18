@@ -487,7 +487,7 @@ function Inner({
             <div className="mm-preview-actions">
               {preview.data.kind === "file" ? (
                 <Link href="/files" className="btn btn-sm btn-primary" onClick={closePreview}>
-                  Open in Files
+                  Open in Repository
                 </Link>
               ) : (
                 <button className="btn btn-sm btn-primary" onClick={openPreviewInTab}>

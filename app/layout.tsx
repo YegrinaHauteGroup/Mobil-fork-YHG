@@ -25,6 +25,19 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
+// Supabase 오리진에 미리 DNS 조회 + TCP/TLS 핸드셰이크를 걸어두면(preconnect)
+// 로그인·데이터 조회 등 첫 요청의 왕복 지연이 줄어든다. 환경변수가 없을 때는
+// 링크를 렌더링하지 않는다.
+const SUPABASE_ORIGIN = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin
+      : null;
+  } catch {
+    return null;
+  }
+})();
+
 export default function RootLayout({
   children,
 }: {
@@ -32,6 +45,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko" className={notoSans.variable}>
+      <head>
+        {SUPABASE_ORIGIN && (
+          <>
+            <link rel="preconnect" href={SUPABASE_ORIGIN} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={SUPABASE_ORIGIN} />
+          </>
+        )}
+      </head>
       <body>{children}</body>
     </html>
   );

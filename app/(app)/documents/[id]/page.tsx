@@ -42,10 +42,10 @@ export default async function DocumentPage({
       <div className="topbar">
         <div className="row" style={{ gap: 12 }}>
           <Link href="/documents" className="btn btn-ghost btn-sm">
-            ← Documents
+            ← Docs +
           </Link>
           <span className="crumb">
-            WORKSPACE / DOCUMENTS / {doc.id.slice(0, 8)}
+            WORKSPACE / DOCS + / {doc.id.slice(0, 8)}
           </span>
         </div>
         <span className="crumb">{canEdit ? "READ · WRITE" : "READ ONLY"}</span>

@@ -14,12 +14,12 @@ const NAV: Record<string, string> = {
 };
 
 const HELP: [string, string][] = [
-  ["g h", "Go to Dashboard"],
-  ["g f", "Go to Files"],
-  ["g d", "Go to Documents"],
-  ["g s", "Go to Sheets"],
+  ["g h", "Go to Operational View"],
+  ["g f", "Go to Repository"],
+  ["g d", "Go to Docs +"],
+  ["g s", "Go to Table"],
   ["g c", "Go to Code"],
-  ["g m", "Go to Mindmap"],
+  ["g m", "Go to Link Graph"],
   [",", "Go to Settings"],
   ["⌘/Ctrl S", "Save (in editors)"],
   ["?", "Toggle this help"],

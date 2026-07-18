@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { IconDocuments, IconCode, IconSheet, IconMindmap, IconFiles } from "./icons";
+import { IconDocuments, IconCode, IconSheet, IconMindmap, IconFiles, IconSearch } from "./icons";
 import { useWorkspace, type TabKind } from "./workspace/workspace-context";
 import {
   searchOntology,
@@ -19,11 +19,11 @@ const KIND_ICON: Record<string, (props: { size?: number }) => React.ReactElement
   file: IconFiles,
 };
 const KIND_LABEL: Record<string, string> = {
-  document: "Document",
+  document: "Docs +",
   code: "Code",
-  sheet: "Sheet",
-  mindmap: "Mindmap",
-  file: "File",
+  sheet: "Table",
+  mindmap: "Link Graph",
+  file: "Repository",
 };
 const TAB_KINDS = new Set(["document", "code", "sheet", "mindmap"]);
 
@@ -121,15 +121,27 @@ export function HeaderSearch() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  // 모바일에서는 검색창을 돋보기 아이콘으로 접어두고, 아이콘을 누를 때만
+  // 검색 입력을 오버레이로 펼친다(헤더 가로 공간 절약).
+  const [mobileOpen, setMobileOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { openTab } = useWorkspace();
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setMobileOpen(false);
+      }
     };
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        setMobileOpen(false);
+      }
+    };
     document.addEventListener("mousedown", onClick);
     document.addEventListener("keydown", onKey);
     return () => {
@@ -137,6 +149,11 @@ export function HeaderSearch() {
       document.removeEventListener("keydown", onKey);
     };
   }, []);
+
+  // 모바일 검색을 펼치면 입력에 포커스를 준다.
+  useEffect(() => {
+    if (mobileOpen) inputRef.current?.focus();
+  }, [mobileOpen]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -161,6 +178,7 @@ export function HeaderSearch() {
     if (TAB_KINDS.has(kind)) {
       openTab(kind as TabKind, id, title);
       setOpen(false);
+      setMobileOpen(false);
       setQuery("");
     }
   };
@@ -171,8 +189,18 @@ export function HeaderSearch() {
   }, {});
 
   return (
-    <div className="hsearch" ref={rootRef}>
+    <div className={`hsearch ${mobileOpen ? "mobile-open" : ""}`} ref={rootRef}>
+      <button
+        type="button"
+        className="hsearch-icon-btn"
+        onClick={() => setMobileOpen((v) => !v)}
+        aria-label="Search"
+        aria-expanded={mobileOpen}
+      >
+        <IconSearch size={18} />
+      </button>
       <input
+        ref={inputRef}
         className="hsearch-input"
         type="text"
         placeholder="Search Mobil… (try #tag)"
@@ -201,7 +229,7 @@ export function HeaderSearch() {
           {!loading && results.some((r) => r.kind === "file") && (
             <div className="hsearch-footer">
               <Link href="/files" onClick={() => setOpen(false)}>
-                Open Files to view matched files →
+                Open Repository to view matched files →
               </Link>
             </div>
           )}

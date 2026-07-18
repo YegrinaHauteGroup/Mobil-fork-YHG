@@ -48,8 +48,8 @@ export default async function DashboardPage() {
   return (
     <>
       <div className="topbar">
-        <span className="topbar-title">Dashboard</span>
-        <span className="crumb">HOME / OVERVIEW</span>
+        <span className="topbar-title">Operational View</span>
+        <span className="crumb">HOME / OPERATIONAL VIEW</span>
       </div>
 
       <div className="content">
@@ -62,20 +62,12 @@ export default async function DashboardPage() {
               Overview of your storage and recent documents.
             </p>
           </div>
-          <div className="row">
-            <Link href="/files" className="btn">
-              Upload file
-            </Link>
-            <Link href="/documents" className="btn btn-primary">
-              New document
-            </Link>
-          </div>
         </div>
 
         <div className="stat-grid">
           <div className="stat">
             <div className="stat-val">{docCount}</div>
-            <div className="stat-label label">DOCUMENTS</div>
+            <div className="stat-label label">DOCS +</div>
           </div>
           <div className="stat">
             <div className="stat-val">{codeCount}</div>
@@ -83,15 +75,15 @@ export default async function DashboardPage() {
           </div>
           <div className="stat">
             <div className="stat-val">{fileCount}</div>
-            <div className="stat-label label">FILES</div>
+            <div className="stat-label label">REPOSITORY</div>
           </div>
           <div className="stat">
             <div className="stat-val">{sheetCount}</div>
-            <div className="stat-label label">SHEETS</div>
+            <div className="stat-label label">TABLE</div>
           </div>
           <div className="stat">
             <div className="stat-val">{mapCount}</div>
-            <div className="stat-label label">MAPS</div>
+            <div className="stat-label label">LINK GRAPH</div>
           </div>
           <div className="stat">
             <div className="stat-val">{profile.role === "admin" ? "ADMIN" : "USER"}</div>
@@ -147,14 +139,14 @@ export default async function DashboardPage() {
 
         <div className="panel">
           <div className="panel-header">
-            <span className="label">RECENT DOCUMENTS</span>
+            <span className="label">RECENT DOCS +</span>
             <Link href="/documents" className="btn btn-ghost btn-sm">
               View all
             </Link>
           </div>
           {recentDocs.length === 0 ? (
             <div className="empty">
-              No documents yet.{" "}
+              No docs yet.{" "}
               <Link href="/documents">Create your first document.</Link>
             </div>
           ) : (

@@ -106,3 +106,11 @@ export function IconMenu({ size }: P) {
     </svg>
   );
 }
+export function IconSearch({ size }: P) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="M21 21l-4.3-4.3" />
+    </svg>
+  );
+}

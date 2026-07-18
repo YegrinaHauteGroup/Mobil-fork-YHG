@@ -19,13 +19,13 @@ export default async function SheetsPage() {
   return (
     <>
       <div className="topbar">
-        <span className="topbar-title">Sheets</span>
-        <span className="crumb">WORKSPACE / SHEETS</span>
+        <span className="topbar-title">Table</span>
+        <span className="crumb">WORKSPACE / TABLE</span>
       </div>
       <div className="content">
         <div className="page-head">
           <div>
-            <h1 className="page-h">Sheets</h1>
+            <h1 className="page-h">Table</h1>
             <p className="page-sub">
               Spreadsheets with formulas, cell formatting and multiple tabs —
               in the browser.

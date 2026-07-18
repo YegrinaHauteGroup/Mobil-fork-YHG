@@ -65,6 +65,12 @@ html,
 body {
   padding: 0;
   margin: 0;
+  /* 앱 셸(.app)이 뷰포트 높이에 정확히 맞고 내부(.content)만 스크롤되도록
+     body 자체 스크롤을 막는다. 이렇게 하지 않으면 모바일에서 100vh 가 URL 바
+     영역까지 포함해 body 가 살짝 스크롤되고, 그때 고정이어야 할 헤더까지 함께
+     밀려 올라간다(= "일부 페이지에서 헤더가 같이 스크롤" 증상). */
+  height: 100%;
+  overflow: hidden;
   background: var(--bg-0);
   color: var(--text-1);
   font-family: var(--font-sans);

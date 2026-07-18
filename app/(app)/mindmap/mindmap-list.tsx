@@ -24,7 +24,7 @@ export function MindMapList({ maps, userId }: { maps: MapRow[]; userId: string }
     <div className="panel">
       <div className="panel-header">
         <span className="label">
-          MAPS ({filtered.length}
+          LINK GRAPH ({filtered.length}
           {query ? ` / ${maps.length}` : ""})
         </span>
         <input
@@ -36,9 +36,9 @@ export function MindMapList({ maps, userId }: { maps: MapRow[]; userId: string }
         />
       </div>
       {maps.length === 0 ? (
-        <div className="empty">No maps yet. Use “New map” to start.</div>
+        <div className="empty">No link graphs yet. Use “New map” to start.</div>
       ) : filtered.length === 0 ? (
-        <div className="empty">No maps match “{query}”.</div>
+        <div className="empty">No link graphs match “{query}”.</div>
       ) : (
         <div className="table-scroll">
         <table className="table">

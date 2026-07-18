@@ -19,11 +19,11 @@ const ORDER: Category[] = [
 ];
 
 const META: Record<Category, { label: string; color: string }> = {
-  files: { label: "Files", color: "#3987e5" },
-  documents: { label: "Documents", color: "#008300" },
+  files: { label: "Repository", color: "#3987e5" },
+  documents: { label: "Docs +", color: "#008300" },
   code: { label: "Code", color: "#d55181" },
-  sheets: { label: "Sheets", color: "#c98500" },
-  mindmaps: { label: "Mindmaps", color: "#199e70" },
+  sheets: { label: "Table", color: "#c98500" },
+  mindmaps: { label: "Link Graph", color: "#199e70" },
   media: { label: "Media", color: "#d95926" },
 };
 

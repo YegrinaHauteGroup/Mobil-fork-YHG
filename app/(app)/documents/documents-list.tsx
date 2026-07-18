@@ -30,7 +30,7 @@ export function DocumentsList({
     <div className="panel">
       <div className="panel-header">
         <span className="label">
-          DOCUMENTS ({filtered.length}
+          DOCS + ({filtered.length}
           {query ? ` / ${docs.length}` : ""})
         </span>
         <input
@@ -42,9 +42,9 @@ export function DocumentsList({
         />
       </div>
       {docs.length === 0 ? (
-        <div className="empty">No documents yet. Use “New document” to start.</div>
+        <div className="empty">No docs yet. Use “New document” to start.</div>
       ) : filtered.length === 0 ? (
-        <div className="empty">No documents match “{query}”.</div>
+        <div className="empty">No docs match “{query}”.</div>
       ) : (
         <div className="table-scroll">
         <table className="table">

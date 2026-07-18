@@ -19,12 +19,12 @@ import { useMobileNav } from "./mobile-nav-context";
 type Item = { href: string; label: string; icon: React.ReactNode };
 
 const MAIN: Item[] = [
-  { href: "/dashboard", label: "Dashboard", icon: <IconDashboard /> },
-  { href: "/files", label: "Files", icon: <IconFiles /> },
-  { href: "/documents", label: "Documents", icon: <IconDocuments /> },
-  { href: "/sheets", label: "Sheets", icon: <IconSheet /> },
+  { href: "/dashboard", label: "Operational View", icon: <IconDashboard /> },
+  { href: "/files", label: "Repository", icon: <IconFiles /> },
+  { href: "/documents", label: "Docs +", icon: <IconDocuments /> },
+  { href: "/sheets", label: "Table", icon: <IconSheet /> },
   { href: "/code", label: "Code", icon: <IconCode /> },
-  { href: "/mindmap", label: "Mindmap", icon: <IconMindmap /> },
+  { href: "/mindmap", label: "Link Graph", icon: <IconMindmap /> },
   { href: "/coworkers", label: "Co-workers", icon: <IconCoworkers /> },
 ];
 

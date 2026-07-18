@@ -18,13 +18,13 @@ export default async function MindMapPage() {
   return (
     <>
       <div className="topbar">
-        <span className="topbar-title">Mindmap</span>
-        <span className="crumb">WORKSPACE / MINDMAP</span>
+        <span className="topbar-title">Link Graph</span>
+        <span className="crumb">WORKSPACE / LINK GRAPH</span>
       </div>
       <div className="content">
         <div className="page-head">
           <div>
-            <h1 className="page-h">Mindmap</h1>
+            <h1 className="page-h">Link Graph</h1>
             <p className="page-sub">
               Arrange files, code and documents as nodes and connect them with
               parent-child links on a free-form canvas.
