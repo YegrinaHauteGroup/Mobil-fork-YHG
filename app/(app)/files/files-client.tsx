@@ -91,7 +91,9 @@ export function FilesClient({
           throw new Error(`Failed to record metadata: ${file.name}`);
         }
 
-        await supabase.from("audit_logs").insert({
+        // 감사 로그는 화면 갱신을 막을 이유가 없다 — 응답을 기다리지 않는다
+        // (브라우저 요청이라 페이지가 열려 있는 한 백그라운드에서 계속 전송된다).
+        supabase.from("audit_logs").insert({
           user_id: userId,
           target_type: "file",
           target_id: fileId,

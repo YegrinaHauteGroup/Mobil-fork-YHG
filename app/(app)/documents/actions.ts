@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
@@ -24,12 +25,15 @@ export async function createDocumentTab(): Promise<{ id: string; title: string }
 
   if (error || !data) throw new Error("Failed to create document.");
 
-  await supabase.from("audit_logs").insert({
-    user_id: user.id,
-    target_type: "document",
-    target_id: data.id,
-    action: "create",
-  });
+  // 감사 로그는 탭이 열리는 응답 속도에 영향이 없도록 응답 전송 이후에 기록한다.
+  after(() =>
+    supabase.from("audit_logs").insert({
+      user_id: user.id,
+      target_type: "document",
+      target_id: data.id,
+      action: "create",
+    })
+  );
 
   return { id: data.id, title: data.title };
 }
@@ -88,24 +92,26 @@ export async function saveDocument(
 
   if (error) return { ok: false, error: "Save failed." };
 
-  await supabase.from("audit_logs").insert({
-    user_id: user.id,
-    target_type: "document",
-    target_id: id,
-    action: "update",
+  // 감사 로그·온톨로지 링크 동기화는 저장 완료 응답을 막지 않도록 응답 이후에 처리한다.
+  after(async () => {
+    await supabase.from("audit_logs").insert({
+      user_id: user.id,
+      target_type: "document",
+      target_id: id,
+      action: "update",
+    });
+    await supabase
+      .rpc("sync_object_links", {
+        p_source: `doc:${id}`,
+        p_from_kind: "document",
+        p_from_id: id,
+        p_links: extractDocLinks(content),
+      })
+      .then(
+        () => {},
+        () => {}
+      );
   });
-
-  await supabase
-    .rpc("sync_object_links", {
-      p_source: `doc:${id}`,
-      p_from_kind: "document",
-      p_from_id: id,
-      p_links: extractDocLinks(content),
-    })
-    .then(
-      () => {},
-      () => {}
-    );
 
   revalidatePath(`/documents/${id}`);
   return { ok: true };
@@ -115,10 +121,12 @@ export async function deleteDocument(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("documents").delete().eq("id", id);
   if (error) return { ok: false, error: "Delete failed." };
-  await supabase.rpc("cleanup_object_links", { p_kind: "document", p_id: id }).then(
-    () => {},
-    () => {}
-  );
+  after(async () => {
+    await supabase.rpc("cleanup_object_links", { p_kind: "document", p_id: id }).then(
+      () => {},
+      () => {}
+    );
+  });
   revalidatePath("/documents");
   return { ok: true };
 }
