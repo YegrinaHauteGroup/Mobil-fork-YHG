@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 const BUCKET = "files";
@@ -31,12 +32,14 @@ export async function getSignedUrl(
     data: { user },
   } = await supabase.auth.getUser();
   if (user) {
-    await supabase.from("audit_logs").insert({
-      user_id: user.id,
-      target_type: "file",
-      target_id: fileId,
-      action: "download",
-    });
+    after(() =>
+      supabase.from("audit_logs").insert({
+        user_id: user.id,
+        target_type: "file",
+        target_id: fileId,
+        action: "download",
+      })
+    );
   }
 
   return { url: signed.signedUrl };
@@ -89,22 +92,24 @@ export async function deleteFile(fileId: string): Promise<ActionResult> {
 
   if (rowErr) return { ok: false, error: "Failed to delete metadata." };
 
-  await supabase.rpc("cleanup_object_links", { p_kind: "file", p_id: fileId }).then(
-    () => {},
-    () => {}
-  );
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (user) {
-    await supabase.from("audit_logs").insert({
-      user_id: user.id,
-      target_type: "file",
-      target_id: fileId,
-      action: "delete",
-    });
-  }
+
+  after(async () => {
+    await supabase.rpc("cleanup_object_links", { p_kind: "file", p_id: fileId }).then(
+      () => {},
+      () => {}
+    );
+    if (user) {
+      await supabase.from("audit_logs").insert({
+        user_id: user.id,
+        target_type: "file",
+        target_id: fileId,
+        action: "delete",
+      });
+    }
+  });
 
   revalidatePath("/files");
   return { ok: true };

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { detectLanguage, isLangKey } from "@/lib/languages";
@@ -23,12 +24,14 @@ export async function createCodeFileTab(): Promise<{ id: string; title: string }
 
   if (error || !data) throw new Error("Failed to create code file.");
 
-  await supabase.from("audit_logs").insert({
-    user_id: user.id,
-    target_type: "code",
-    target_id: data.id,
-    action: "create",
-  });
+  after(() =>
+    supabase.from("audit_logs").insert({
+      user_id: user.id,
+      target_type: "code",
+      target_id: data.id,
+      action: "create",
+    })
+  );
 
   return { id: data.id, title: data.name };
 }
@@ -91,12 +94,14 @@ export async function saveCodeFile(
 
   if (error) return { ok: false, error: "Save failed." };
 
-  await supabase.from("audit_logs").insert({
-    user_id: user.id,
-    target_type: "code",
-    target_id: id,
-    action: "update",
-  });
+  after(() =>
+    supabase.from("audit_logs").insert({
+      user_id: user.id,
+      target_type: "code",
+      target_id: id,
+      action: "update",
+    })
+  );
 
   revalidatePath(`/code/${id}`);
   return { ok: true };
@@ -106,10 +111,12 @@ export async function deleteCodeFile(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("code_files").delete().eq("id", id);
   if (error) return { ok: false, error: "Delete failed." };
-  await supabase.rpc("cleanup_object_links", { p_kind: "code", p_id: id }).then(
-    () => {},
-    () => {}
-  );
+  after(async () => {
+    await supabase.rpc("cleanup_object_links", { p_kind: "code", p_id: id }).then(
+      () => {},
+      () => {}
+    );
+  });
   revalidatePath("/code");
   return { ok: true };
 }

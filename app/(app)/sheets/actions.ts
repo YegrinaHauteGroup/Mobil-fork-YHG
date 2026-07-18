@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
@@ -79,10 +80,12 @@ export async function deleteSheet(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("sheets").delete().eq("id", id);
   if (error) return { ok: false, error: "Delete failed." };
-  await supabase.rpc("cleanup_object_links", { p_kind: "sheet", p_id: id }).then(
-    () => {},
-    () => {}
-  );
+  after(async () => {
+    await supabase.rpc("cleanup_object_links", { p_kind: "sheet", p_id: id }).then(
+      () => {},
+      () => {}
+    );
+  });
   revalidatePath("/sheets");
   return { ok: true };
 }

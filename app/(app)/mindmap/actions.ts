@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
@@ -78,17 +79,20 @@ export async function saveMindMap(
 
   // 온톨로지 링크 그래프 동기화 — 실패해도 저장 자체는 이미 성공했으므로
   // 무시한다(검색·연결 미리보기가 약간 뒤처질 뿐, 데이터 유실 아님).
-  await supabase
-    .rpc("sync_object_links", {
-      p_source: `mindmap:${id}`,
-      p_from_kind: "mindmap",
-      p_from_id: id,
-      p_links: extractMindmapLinks(data),
-    })
-    .then(
-      () => {},
-      () => {}
-    );
+  // 저장 응답 속도에 영향이 없도록 응답 전송 이후에 실행한다.
+  after(async () => {
+    await supabase
+      .rpc("sync_object_links", {
+        p_source: `mindmap:${id}`,
+        p_from_kind: "mindmap",
+        p_from_id: id,
+        p_links: extractMindmapLinks(data),
+      })
+      .then(
+        () => {},
+        () => {}
+      );
+  });
 
   revalidatePath(`/mindmap/${id}`);
   return { ok: true };
@@ -98,10 +102,12 @@ export async function deleteMindMap(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("mind_maps").delete().eq("id", id);
   if (error) return { ok: false, error: "Delete failed." };
-  await supabase.rpc("cleanup_object_links", { p_kind: "mindmap", p_id: id }).then(
-    () => {},
-    () => {}
-  );
+  after(async () => {
+    await supabase.rpc("cleanup_object_links", { p_kind: "mindmap", p_id: id }).then(
+      () => {},
+      () => {}
+    );
+  });
   revalidatePath("/mindmap");
   return { ok: true };
 }
