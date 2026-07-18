@@ -4,6 +4,7 @@ import "./code-editor.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "../../workspace/workspace-context";
+import { ContributorBadges } from "../../contributors/contributor-badges";
 import dynamic from "next/dynamic";
 import { LANGUAGES, isLangKey, detectLanguage, type LangKey } from "@/lib/languages";
 import { ShareDialog } from "@/components/share-dialog";
@@ -211,6 +212,7 @@ export function CodeEditor({
           </select>
         </div>
         <div className="row" style={{ gap: 10 }}>
+          <ContributorBadges kind="code" id={fileId} refreshToken={saveState} />
           <span
             className={`save-state ${
               saveState === "dirty"

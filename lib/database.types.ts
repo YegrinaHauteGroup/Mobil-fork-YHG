@@ -338,6 +338,16 @@ export interface Database {
         Args: { p_user_id: string };
         Returns: undefined;
       };
+      get_content_contributors: {
+        Args: { p_kind: string; p_id: string };
+        Returns: {
+          user_id: string;
+          display_name: string | null;
+          email: string;
+          avatar_url: string | null;
+          first_contributed_at: string;
+        }[];
+      };
       list_users_by_approval: {
         Args: { p_status: string | null };
         Returns: {

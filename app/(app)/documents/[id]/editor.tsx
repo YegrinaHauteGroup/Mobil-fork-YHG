@@ -31,6 +31,7 @@ import {
 } from "../actions";
 import { downloadBase64File } from "@/lib/download-file";
 import { useWorkspace } from "../../workspace/workspace-context";
+import { ContributorBadges } from "../../contributors/contributor-badges";
 
 type SaveState = "saved" | "dirty" | "saving";
 const AUTOSAVE_MS = 1200;
@@ -258,6 +259,7 @@ export function DocumentEditor({
           disabled={!canEdit}
         />
         <div className="row" style={{ gap: 10 }}>
+          <ContributorBadges kind="document" id={docId} refreshToken={saveState} />
           <span
             className={`save-state ${
               saveState === "dirty" ? "dirty" : saveState === "saved" ? "saved" : ""

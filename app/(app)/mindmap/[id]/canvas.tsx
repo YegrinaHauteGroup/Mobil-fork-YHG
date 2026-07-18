@@ -36,6 +36,7 @@ import {
   getReferencePreview,
 } from "../actions";
 import { useWorkspace } from "../../workspace/workspace-context";
+import { ContributorBadges } from "../../contributors/contributor-badges";
 import { formatBytes } from "@/lib/format";
 
 type SaveState = "saved" | "dirty" | "saving";
@@ -392,6 +393,7 @@ function Inner({
           )}
         </div>
         <div className="row" style={{ gap: 10 }}>
+          <ContributorBadges kind="mindmap" id={mapId} refreshToken={saveState} />
           <span
             className={`save-state ${
               saveState === "dirty" ? "dirty" : saveState === "saved" ? "saved" : ""
