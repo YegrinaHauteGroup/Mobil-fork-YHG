@@ -57,10 +57,14 @@
   color: var(--ok);
 }
 
-/* fortune-sheet renders its own light-themed UI (grid, toolbar, formula bar).
-   Rather than fight ~3000+ lines of vendor CSS with an incomplete dark
-   reskin, it is framed as a light "page" inside the dark app shell — the
-   same treatment real spreadsheet apps get when embedded in a dark IDE. */
+/* fortune-sheet renders the cell grid on a <canvas> with colors hardcoded
+   in the compiled bundle (no theme prop exists) — CSS cannot recolor canvas
+   pixels by targeting classes. Instead the whole widget is inverted with a
+   CSS filter, the same technique dark-mode browser extensions use, because
+   filter: invert() operates on final composited pixels and affects canvas
+   content too, not just DOM/CSS. Trade-off: any custom cell/text color a
+   user picks comes out hue-rotated to its complement (e.g. red -> cyan);
+   plain black-on-white cells (the common case) invert to a clean dark grid. */
 .sh-canvas {
   flex: 1;
   min-height: 0;
@@ -76,4 +80,5 @@
   overflow: hidden;
   background: #fff;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  filter: invert(0.92) hue-rotate(180deg);
 }

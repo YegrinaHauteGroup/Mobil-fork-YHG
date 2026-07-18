@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/format";
+import { OpenItemButton } from "../workspace/open-item-button";
 
 type MapRow = {
   id: string;
@@ -54,7 +54,9 @@ export function MindMapList({ maps, userId }: { maps: MapRow[]; userId: string }
             {filtered.map((m) => (
               <tr key={m.id}>
                 <td>
-                  <Link href={`/mindmap/${m.id}`}>{m.title || "Untitled map"}</Link>
+                  <OpenItemButton kind="mindmap" id={m.id} title={m.title || "Untitled map"} className="link-btn">
+                    {m.title || "Untitled map"}
+                  </OpenItemButton>
                 </td>
                 <td>
                   {m.is_public ? (
@@ -70,9 +72,9 @@ export function MindMapList({ maps, userId }: { maps: MapRow[]; userId: string }
                   {formatDate(m.updated_at)}
                 </td>
                 <td>
-                  <Link href={`/mindmap/${m.id}`} className="btn btn-ghost btn-sm">
+                  <OpenItemButton kind="mindmap" id={m.id} title={m.title || "Untitled map"} className="btn btn-ghost btn-sm">
                     Open
-                  </Link>
+                  </OpenItemButton>
                 </td>
               </tr>
             ))}

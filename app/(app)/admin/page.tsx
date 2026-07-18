@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
@@ -57,6 +58,9 @@ export default async function AdminConsolePage() {
         <div className="panel" style={{ marginBottom: 24 }}>
           <div className="panel-header">
             <span className="label">USERS ({users.length})</span>
+            <Link href="/admin/users" className="btn btn-ghost btn-sm">
+              Manage all users →
+            </Link>
           </div>
           <table className="table">
             <thead>

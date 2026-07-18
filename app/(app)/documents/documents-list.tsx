@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/format";
+import { OpenItemButton } from "../workspace/open-item-button";
 
 type DocRow = {
   id: string;
@@ -60,7 +60,9 @@ export function DocumentsList({
             {filtered.map((d) => (
               <tr key={d.id}>
                 <td>
-                  <Link href={`/documents/${d.id}`}>{d.title || "Untitled"}</Link>
+                  <OpenItemButton kind="document" id={d.id} title={d.title || "Untitled"} className="link-btn">
+                    {d.title || "Untitled"}
+                  </OpenItemButton>
                 </td>
                 <td>
                   {d.is_public ? (
@@ -78,9 +80,9 @@ export function DocumentsList({
                   {formatDate(d.updated_at)}
                 </td>
                 <td>
-                  <Link href={`/documents/${d.id}`} className="btn btn-ghost btn-sm">
+                  <OpenItemButton kind="document" id={d.id} title={d.title || "Untitled"} className="btn btn-ghost btn-sm">
                     Open
-                  </Link>
+                  </OpenItemButton>
                 </td>
               </tr>
             ))}

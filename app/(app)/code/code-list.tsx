@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/format";
+import { OpenItemButton } from "../workspace/open-item-button";
 
 type CodeRow = {
   id: string;
@@ -60,7 +60,9 @@ export function CodeList({ files, userId }: { files: CodeRow[]; userId: string }
             {filtered.map((c) => (
               <tr key={c.id}>
                 <td className="mono">
-                  <Link href={`/code/${c.id}`}>{c.name}</Link>
+                  <OpenItemButton kind="code" id={c.id} title={c.name} className="link-btn">
+                    {c.name}
+                  </OpenItemButton>
                 </td>
                 <td className="mono muted" style={{ fontSize: 12 }}>
                   {c.language}
@@ -81,9 +83,9 @@ export function CodeList({ files, userId }: { files: CodeRow[]; userId: string }
                   {formatDate(c.updated_at)}
                 </td>
                 <td>
-                  <Link href={`/code/${c.id}`} className="btn btn-ghost btn-sm">
+                  <OpenItemButton kind="code" id={c.id} title={c.name} className="btn btn-ghost btn-sm">
                     Open
-                  </Link>
+                  </OpenItemButton>
                 </td>
               </tr>
             ))}

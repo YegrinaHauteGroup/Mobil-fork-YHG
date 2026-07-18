@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { createMindMap } from "./actions";
+import { createMindMapTab } from "./actions";
 import { MindMapList } from "./mindmap-list";
+import { NewItemButton } from "../workspace/new-item-button";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +30,7 @@ export default async function MindMapPage() {
               parent-child links on a free-form canvas.
             </p>
           </div>
-          <form action={createMindMap}>
-            <button type="submit" className="btn btn-primary">
-              New map
-            </button>
-          </form>
+          <NewItemButton kind="mindmap" label="New map" create={createMindMapTab} />
         </div>
 
         <MindMapList maps={maps ?? []} userId={userId} />

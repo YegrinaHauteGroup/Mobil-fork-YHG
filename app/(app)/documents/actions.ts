@@ -1,29 +1,27 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-/** 새 문서 생성 후 에디터로 이동. */
-export async function createDocument(): Promise<void> {
+/** 탭 시스템용: 리다이렉트 없이 새 문서를 만들고 id/title 만 반환. */
+export async function createDocumentTab(): Promise<{ id: string; title: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) throw new Error("Authentication required.");
 
   const { data, error } = await supabase
     .from("documents")
     .insert({ owner_id: user.id, title: "Untitled" })
-    .select("id")
+    .select("id, title")
     .single();
 
-  if (error || !data) {
-    throw new Error("Failed to create document.");
-  }
+  if (error || !data) throw new Error("Failed to create document.");
 
   await supabase.from("audit_logs").insert({
     user_id: user.id,
@@ -32,7 +30,42 @@ export async function createDocument(): Promise<void> {
     action: "create",
   });
 
-  redirect(`/documents/${data.id}`);
+  return { id: data.id, title: data.title };
+}
+
+/** 탭 시스템용: 문서 데이터 + 편집 가능 여부를 한 번에 조회. */
+export async function getDocumentForTab(id: string) {
+  const { userId, profile } = await requireUser();
+  const supabase = await createClient();
+
+  const { data: doc } = await supabase
+    .from("documents")
+    .select("id, owner_id, title, content, is_public, updated_at")
+    .eq("id", id)
+    .single();
+
+  if (!doc) return null;
+
+  let canEdit = doc.owner_id === userId || profile.role === "admin";
+  if (!canEdit) {
+    const { data: perm } = await supabase
+      .from("document_permissions")
+      .select("permission")
+      .eq("document_id", id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    canEdit = perm?.permission === "edit";
+  }
+
+  return {
+    id: doc.id,
+    title: doc.title,
+    content: doc.content,
+    isPublic: doc.is_public,
+    canEdit,
+    isOwner: doc.owner_id === userId,
+    myShareId: userId,
+  };
 }
 
 /** 제목/콘텐츠 저장. content 는 Tiptap JSON. */

@@ -40,6 +40,9 @@
 | 코드 | 웹 코드 에디터(CodeMirror 6) — 구문 강조 · 다국어 · 자동/수동 저장 · 다운로드 · 공유 · 공개 토글 · 검색 |
 | 시트 | 스프레드시트 에디터(@fortune-sheet) — 수식 · 서식 · 다중 시트 탭 · 자동/수동 저장 · 공유 · 공개 토글 · 검색 |
 | 마인드맵 | React Flow 캔버스 — 파일·코드·문서를 노드로 배치하고 상하관계(간선)로 연결 · 공유 · 공개 토글 |
+| 작업공간 | 브라우저 탭처럼 문서/코드/시트/마인드맵을 열고 닫는 탭 스트립(헤더 하단), 최대 2분할 스플릿뷰(드래그로 비율 조절) |
+| 대시보드 | 스토리지 사용량 그래프(카테고리별 구성) · 전체 공유 스토리지 대비 내 사용 비율 그래프 |
+| 관리자 | 전체 사용자 목록·역할·콘텐츠 개수·스토리지 사용량 관리 페이지(`/admin/users`) |
 | 설정 | 표시 이름 변경, 이메일·권한·공유 ID 확인 |
 | 감사 | 주요 작업을 `audit_logs` 에 기록, 관리자 콘솔에서 조회 |
 
@@ -58,6 +61,28 @@
 사용자는 타인의 프로필을 이메일로 조회할 수 없으므로, 각 사용자는 대시보드에서
 자신의 공유 ID 를 복사해 상대에게 전달합니다.
 
+### 작업공간(탭·스플릿뷰)
+
+문서/코드/시트/마인드맵을 열면 브라우저 창처럼 헤더 바로 아래 탭 스트립에
+활성화되고, 목록 페이지로 이동해도(사이드바 탐색) 탭은 유지된 채 숨겨졌다가
+다시 클릭하면 즉시 복귀합니다. 탭은 개별적으로 닫을 수 있고, 스플릿뷰 아이콘을
+누르면 최대 2개까지 나란히 열어 비교할 수 있으며 가운데 구분선을 드래그해
+비율(20~80%)을 조절합니다. 탭 목록·분할 상태·비율은 `localStorage` 에 저장되어
+새로고침 후에도 유지됩니다. 상태는 `app/(app)/workspace/workspace-context.tsx`
+의 React Context 로 관리하고, 패널이 숨겨지면 캔버스·ResizeObserver 기반
+에디터(CodeMirror·스프레드시트·React Flow)가 `display:none` 상태에서 깨지는
+것을 피하기 위해 완전히 언마운트합니다(재표시 시 자동저장된 데이터를 다시
+조회 — 유실 없음).
+
+### 스토리지 분석
+
+Supabase Storage 는 사용자 구분 없이 프로젝트 전체가 하나의 버킷 풀을
+공유합니다(사용자별 할당량 없음). 대시보드는 이를 반영해 두 그래프를
+제공합니다 — 내 콘텐츠가 파일/문서/코드/시트/마인드맵/미디어 중 무엇에 얼마나
+쓰이는지 보여주는 구성 막대그래프, 그리고 전체 플랫폼 스토리지 대비 내가 차지하는
+비율 그래프. 관리자는 `/admin/users` 에서 전체 사용자의 역할·콘텐츠 개수·
+스토리지 사용량을 한 번에 확인할 수 있습니다.
+
 ## 프로젝트 구조
 
 ```
@@ -71,10 +96,12 @@ app/
     files/           파일 저장소
     documents/[id]/  Tiptap 문서 에디터
     code/[id]/       CodeMirror 코드 에디터
-    sheets/[id]/     스프레드시트 에디터 (@fortune-sheet)
+    sheets/[id]/     스프레드시트 에디터 (@fortune-sheet, 다크 테마)
     mindmap/[id]/    React Flow 마인드맵 캔버스
+    workspace/       탭 스트립 · 스플릿뷰 셸 (React Context)
+    dashboard/       개요 · 스토리지 사용량 그래프 · 최근 문서
     settings/        프로필 · 계정 설정
-    admin/           코드 등록 · 관리자 콘솔
+    admin/           코드 등록 · 관리자 콘솔 · 전체 사용자 관리(users/)
   auth/              콜백 · 로그아웃 라우트
 components/codemirror/ 코드 에디터 래퍼 · 테마 · 언어 매핑
 lib/supabase/        browser · server · middleware 클라이언트
@@ -106,6 +133,9 @@ npm install
    - `supabase/migrations/0008_media_bucket.sql` — 에디터 이미지/동영상용 공개 media 버킷
    - `supabase/migrations/0009_mind_maps.sql` — 마인드맵 테이블 · RLS
    - `supabase/migrations/0010_sheets.sql` — 스프레드시트 테이블 · RLS
+   - `supabase/migrations/0011_storage_and_admin_stats.sql` — 스토리지/관리자 통계 함수
+   - `supabase/migrations/0012_fix_storage_stats_bigint_cast.sql` — `sum()` numeric→bigint 캐스트 수정
+   - `supabase/migrations/0013_content_breakdown.sql` — 카테고리별 콘텐츠 사용량 분해 함수(대시보드 그래프용)
 
 > `0003` 은 가입 시 `profiles` 행을 자동 생성하는 트리거입니다. `0001` 은 profiles
 > INSERT 정책을 두지 않으므로, `auth.users` INSERT 시점의 SECURITY DEFINER 트리거로

@@ -12,6 +12,7 @@ import {
   IconKey,
   IconConsole,
 } from "./icons";
+import { useWorkspace } from "./workspace/workspace-context";
 
 type Item = { href: string; label: string; icon: React.ReactNode };
 
@@ -26,6 +27,7 @@ const MAIN: Item[] = [
 
 export function Sidebar({ role }: { role: "user" | "admin" }) {
   const pathname = usePathname();
+  const { hide } = useWorkspace();
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
@@ -38,6 +40,7 @@ export function Sidebar({ role }: { role: "user" | "admin" }) {
           className={`rail-link ${isActive(item.href) ? "active" : ""}`}
           title={item.label}
           aria-label={item.label}
+          onClick={hide}
         >
           {item.icon}
         </Link>
@@ -48,6 +51,7 @@ export function Sidebar({ role }: { role: "user" | "admin" }) {
         className={`rail-link ${isActive("/admin/redeem") ? "active" : ""}`}
         title="Redeem admin code"
         aria-label="Redeem admin code"
+        onClick={hide}
       >
         <IconKey />
       </Link>
@@ -57,6 +61,7 @@ export function Sidebar({ role }: { role: "user" | "admin" }) {
           className={`rail-link ${pathname === "/admin" ? "active" : ""}`}
           title="Admin console"
           aria-label="Admin console"
+          onClick={hide}
         >
           <IconConsole />
         </Link>

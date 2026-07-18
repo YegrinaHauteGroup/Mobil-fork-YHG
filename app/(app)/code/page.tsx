@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { createCodeFile } from "./actions";
+import { createCodeFileTab } from "./actions";
 import { CodeList } from "./code-list";
+import { NewItemButton } from "../workspace/new-item-button";
 
 export const dynamic = "force-dynamic";
 
@@ -30,11 +31,7 @@ export default async function CodePage() {
               Write and edit code in the browser — syntax highlighting, auto and manual save.
             </p>
           </div>
-          <form action={createCodeFile}>
-            <button type="submit" className="btn btn-primary">
-              New code file
-            </button>
-          </form>
+          <NewItemButton kind="code" label="New code file" create={createCodeFileTab} />
         </div>
 
         <CodeList files={list} userId={userId} />

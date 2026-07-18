@@ -307,6 +307,38 @@ export interface Database {
         Args: { p_expires_at: string | null };
         Returns: string;
       };
+      my_storage_usage: {
+        Args: Record<string, never>;
+        Returns: { bucket_id: string; bytes: number; file_count: number }[];
+      };
+      platform_storage_usage: {
+        Args: Record<string, never>;
+        Returns: { bucket_id: string; bytes: number; file_count: number }[];
+      };
+      my_content_breakdown: {
+        Args: Record<string, never>;
+        Returns: { category: string; bytes: number; item_count: number }[];
+      };
+      platform_content_breakdown: {
+        Args: Record<string, never>;
+        Returns: { category: string; bytes: number; item_count: number }[];
+      };
+      admin_user_overview: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          email: string;
+          display_name: string | null;
+          role: Role;
+          created_at: string;
+          documents_count: number;
+          files_count: number;
+          code_count: number;
+          sheets_count: number;
+          maps_count: number;
+          storage_bytes: number;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

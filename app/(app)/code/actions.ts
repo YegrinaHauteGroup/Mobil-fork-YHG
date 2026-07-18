@@ -1,29 +1,27 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import { detectLanguage, isLangKey } from "@/lib/languages";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-/** 새 코드 파일 생성 후 에디터로 이동. */
-export async function createCodeFile(): Promise<void> {
+/** 탭 시스템용: 리다이렉트 없이 새 코드 파일을 만들고 id/name 만 반환. */
+export async function createCodeFileTab(): Promise<{ id: string; title: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) throw new Error("Authentication required.");
 
   const { data, error } = await supabase
     .from("code_files")
     .insert({ owner_id: user.id, name: "untitled.txt", language: "plaintext" })
-    .select("id")
+    .select("id, name")
     .single();
 
-  if (error || !data) {
-    throw new Error("Failed to create code file.");
-  }
+  if (error || !data) throw new Error("Failed to create code file.");
 
   await supabase.from("audit_logs").insert({
     user_id: user.id,
@@ -32,7 +30,43 @@ export async function createCodeFile(): Promise<void> {
     action: "create",
   });
 
-  redirect(`/code/${data.id}`);
+  return { id: data.id, title: data.name };
+}
+
+/** 탭 시스템용: 코드 파일 데이터 + 편집 가능 여부를 한 번에 조회. */
+export async function getCodeFileForTab(id: string) {
+  const { userId, profile } = await requireUser();
+  const supabase = await createClient();
+
+  const { data: file } = await supabase
+    .from("code_files")
+    .select("id, owner_id, name, language, content, is_public, updated_at")
+    .eq("id", id)
+    .single();
+
+  if (!file) return null;
+
+  let canEdit = file.owner_id === userId || profile.role === "admin";
+  if (!canEdit) {
+    const { data: perm } = await supabase
+      .from("code_file_permissions")
+      .select("permission")
+      .eq("code_file_id", id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    canEdit = perm?.permission === "edit";
+  }
+
+  return {
+    id: file.id,
+    name: file.name,
+    language: file.language,
+    content: file.content,
+    isPublic: file.is_public,
+    canEdit,
+    isOwner: file.owner_id === userId,
+    myShareId: userId,
+  };
 }
 
 /** 이름/언어/콘텐츠 저장. */

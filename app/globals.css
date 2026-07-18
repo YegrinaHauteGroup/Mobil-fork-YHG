@@ -309,6 +309,19 @@ a:hover {
 .table tbody tr:last-child td {
   border-bottom: none;
 }
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--steel-hover);
+  cursor: pointer;
+  text-align: left;
+}
+.link-btn:hover {
+  text-decoration: underline;
+}
 
 /* 배지 */
 .badge {

@@ -2,12 +2,23 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { Copyable } from "@/components/copyable";
+import { StorageBreakdownChart, StorageShareBar } from "./storage-chart";
+import { OpenItemButton } from "../workspace/open-item-button";
 
 export default async function DashboardPage() {
   const { userId, profile } = await requireUser();
   const supabase = await createClient();
 
-  const [filesRes, docsRes, codeRes, sheetsRes, mapsRes, sharedDocsRes] = await Promise.all([
+  const [
+    filesRes,
+    docsRes,
+    codeRes,
+    sheetsRes,
+    mapsRes,
+    sharedDocsRes,
+    myUsageRes,
+    platformUsageRes,
+  ] = await Promise.all([
     supabase.from("files").select("id", { count: "exact", head: true }),
     supabase.from("documents").select("id", { count: "exact", head: true }),
     supabase.from("code_files").select("id", { count: "exact", head: true }),
@@ -18,6 +29,8 @@ export default async function DashboardPage() {
       .select("id, title, updated_at, owner_id")
       .order("updated_at", { ascending: false })
       .limit(5),
+    supabase.rpc("my_content_breakdown"),
+    supabase.rpc("platform_content_breakdown"),
   ]);
 
   const fileCount = filesRes.count ?? 0;
@@ -26,6 +39,11 @@ export default async function DashboardPage() {
   const sheetCount = sheetsRes.count ?? 0;
   const mapCount = mapsRes.count ?? 0;
   const recentDocs = sharedDocsRes.data ?? [];
+
+  const myUsage = myUsageRes.data ?? [];
+  const platformUsage = platformUsageRes.data ?? [];
+  const myBytes = myUsage.reduce((s, r) => s + r.bytes, 0);
+  const platformBytes = platformUsage.reduce((s, r) => s + r.bytes, 0);
 
   return (
     <>
@@ -81,6 +99,25 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+        <div className="stg-grid">
+          <div className="panel">
+            <div className="panel-header">
+              <span className="label">MY STORAGE USAGE</span>
+            </div>
+            <div className="panel-body">
+              <StorageBreakdownChart rows={myUsage} />
+            </div>
+          </div>
+          <div className="panel">
+            <div className="panel-header">
+              <span className="label">SHARE OF PLATFORM TOTAL</span>
+            </div>
+            <div className="panel-body">
+              <StorageShareBar myBytes={myBytes} platformBytes={platformBytes} />
+            </div>
+          </div>
+        </div>
+
         <div className="panel" style={{ marginBottom: 24 }}>
           <div className="panel-header">
             <span className="label">My Share ID</span>
@@ -92,6 +129,21 @@ export default async function DashboardPage() {
             <Copyable value={userId} />
           </div>
         </div>
+
+        {profile.role === "admin" && (
+          <Link href="/admin/users" className="panel admin-cta" style={{ marginBottom: 24 }}>
+            <div className="panel-body admin-cta-body">
+              <div>
+                <span className="label">ADMIN</span>
+                <div className="admin-cta-title">Manage all Mobil users</div>
+                <p className="page-sub" style={{ margin: "6px 0 0" }}>
+                  View every account&rsquo;s role, storage usage and content counts.
+                </p>
+              </div>
+              <span className="btn btn-primary btn-sm">Open</span>
+            </div>
+          </Link>
+        )}
 
         <div className="panel">
           <div className="panel-header">
@@ -117,17 +169,28 @@ export default async function DashboardPage() {
               <tbody>
                 {recentDocs.map((d) => (
                   <tr key={d.id}>
-                    <td>{d.title || "Untitled"}</td>
+                    <td>
+                      <OpenItemButton
+                        kind="document"
+                        id={d.id}
+                        title={d.title || "Untitled"}
+                        className="link-btn"
+                      >
+                        {d.title || "Untitled"}
+                      </OpenItemButton>
+                    </td>
                     <td className="mono muted">
                       {new Date(d.updated_at).toLocaleString("en-US")}
                     </td>
                     <td>
-                      <Link
-                        href={`/documents/${d.id}`}
+                      <OpenItemButton
+                        kind="document"
+                        id={d.id}
+                        title={d.title || "Untitled"}
                         className="btn btn-ghost btn-sm"
                       >
                         Open
-                      </Link>
+                      </OpenItemButton>
                     </td>
                   </tr>
                 ))}

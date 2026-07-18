@@ -1,0 +1,140 @@
+.stg-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+@media (max-width: 860px) {
+  .stg-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stg-total {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-0);
+}
+.stg-total .unit {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-left: 6px;
+}
+
+/* stacked composition bar */
+.stg-bar-wrap {
+  position: relative;
+  margin: 14px 0 4px;
+}
+.stg-bar {
+  display: flex;
+  width: 100%;
+  height: 14px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+}
+.stg-seg {
+  height: 100%;
+  min-width: 2px;
+  cursor: default;
+  transition: opacity 0.1s;
+  border-right: 2px solid var(--bg-2);
+}
+.stg-seg:last-child {
+  border-right: none;
+}
+.stg-seg.dim {
+  opacity: 0.35;
+}
+.stg-bar.empty {
+  background: var(--bg-3);
+}
+
+.stg-tooltip {
+  position: absolute;
+  bottom: 100%;
+  transform: translateX(-50%);
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  background: var(--bg-4);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--text-0);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.stg-tooltip .k {
+  color: var(--text-2);
+  margin-left: 4px;
+}
+
+/* legend */
+.stg-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px 16px;
+  margin-top: 16px;
+}
+.stg-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  cursor: default;
+}
+.stg-swatch {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  flex: none;
+}
+.stg-legend-label {
+  color: var(--text-1);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stg-legend-val {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+
+/* share-of-platform bar */
+.stg-share-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.stg-share-pct {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--text-0);
+}
+.stg-share-sub {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.stg-share-bar {
+  height: 10px;
+  border-radius: 3px;
+  background: var(--bg-1);
+  border: 1px solid var(--border-1);
+  overflow: hidden;
+}
+.stg-share-fill {
+  height: 100%;
+  background: #3987e5;
+  min-width: 2px;
+  transition: width 0.3s;
+}

@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { createSheet } from "./actions";
+import { createSheetTab } from "./actions";
 import { SheetList } from "./sheet-list";
+import { NewItemButton } from "../workspace/new-item-button";
 
 export const dynamic = "force-dynamic";
 
@@ -29,11 +30,7 @@ export default async function SheetsPage() {
               in the browser.
             </p>
           </div>
-          <form action={createSheet}>
-            <button type="submit" className="btn btn-primary">
-              New sheet
-            </button>
-          </form>
+          <NewItemButton kind="sheet" label="New sheet" create={createSheetTab} />
         </div>
 
         <SheetList sheets={sheets ?? []} userId={userId} />

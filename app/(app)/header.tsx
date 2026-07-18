@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { IconSettings, IconSignOut } from "./icons";
+import { useWorkspace } from "./workspace/workspace-context";
 
 export function AppHeader({
   displayName,
@@ -17,6 +18,7 @@ export function AppHeader({
   const ref = useRef<HTMLDivElement>(null);
   const name = displayName || email.split("@")[0];
   const initial = (name || "?").charAt(0).toUpperCase();
+  const { hide } = useWorkspace();
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -33,7 +35,7 @@ export function AppHeader({
 
   return (
     <header className="app-header">
-      <Link href="/dashboard" className="brand-logo">
+      <Link href="/dashboard" className="brand-logo" onClick={hide}>
         Mobil
       </Link>
 
@@ -50,7 +52,14 @@ export function AppHeader({
               <div className="n">{name}</div>
               <div className="e">{email}</div>
             </div>
-            <Link href="/settings" className="acct-item" onClick={() => setOpen(false)}>
+            <Link
+              href="/settings"
+              className="acct-item"
+              onClick={() => {
+                setOpen(false);
+                hide();
+              }}
+            >
               <IconSettings size={16} />
               Settings
             </Link>

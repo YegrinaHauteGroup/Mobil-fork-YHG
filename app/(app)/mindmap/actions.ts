@@ -1,27 +1,66 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-export async function createMindMap(): Promise<void> {
+/** 탭 시스템용: 리다이렉트 없이 새 마인드맵을 만들고 id/title 만 반환. */
+export async function createMindMapTab(): Promise<{ id: string; title: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) throw new Error("Authentication required.");
 
   const { data, error } = await supabase
     .from("mind_maps")
     .insert({ owner_id: user.id, title: "Untitled map" })
-    .select("id")
+    .select("id, title")
     .single();
 
   if (error || !data) throw new Error("Failed to create map.");
-  redirect(`/mindmap/${data.id}`);
+  return { id: data.id, title: data.title };
+}
+
+/** 탭 시스템용: 마인드맵 데이터 + 편집 가능 여부 + 참조 아이템 목록을 조회. */
+export async function getMindMapForTab(id: string) {
+  const { userId, profile } = await requireUser();
+  const supabase = await createClient();
+
+  const { data: map } = await supabase
+    .from("mind_maps")
+    .select("id, owner_id, title, data, is_public, updated_at")
+    .eq("id", id)
+    .single();
+
+  if (!map) return null;
+
+  let canEdit = map.owner_id === userId || profile.role === "admin";
+  if (!canEdit) {
+    const { data: perm } = await supabase
+      .from("mind_map_permissions")
+      .select("permission")
+      .eq("mind_map_id", id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    canEdit = perm?.permission === "edit";
+  }
+
+  const items = await listWorkspaceItems();
+
+  return {
+    id: map.id,
+    title: map.title,
+    data: map.data,
+    isPublic: map.is_public,
+    canEdit,
+    isOwner: map.owner_id === userId,
+    myShareId: userId,
+    items,
+  };
 }
 
 export async function saveMindMap(

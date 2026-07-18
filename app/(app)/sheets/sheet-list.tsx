@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/format";
+import { OpenItemButton } from "../workspace/open-item-button";
 
 type SheetRow = {
   id: string;
@@ -54,7 +54,9 @@ export function SheetList({ sheets, userId }: { sheets: SheetRow[]; userId: stri
             {filtered.map((s) => (
               <tr key={s.id}>
                 <td>
-                  <Link href={`/sheets/${s.id}`}>{s.title || "Untitled sheet"}</Link>
+                  <OpenItemButton kind="sheet" id={s.id} title={s.title || "Untitled sheet"} className="link-btn">
+                    {s.title || "Untitled sheet"}
+                  </OpenItemButton>
                 </td>
                 <td>
                   {s.is_public ? (
@@ -70,9 +72,9 @@ export function SheetList({ sheets, userId }: { sheets: SheetRow[]; userId: stri
                   {formatDate(s.updated_at)}
                 </td>
                 <td>
-                  <Link href={`/sheets/${s.id}`} className="btn btn-ghost btn-sm">
+                  <OpenItemButton kind="sheet" id={s.id} title={s.title || "Untitled sheet"} className="btn btn-ghost btn-sm">
                     Open
-                  </Link>
+                  </OpenItemButton>
                 </td>
               </tr>
             ))}

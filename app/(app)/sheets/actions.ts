@@ -1,27 +1,63 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-export async function createSheet(): Promise<void> {
+/** 탭 시스템용: 리다이렉트 없이 새 시트를 만들고 id/title 만 반환. */
+export async function createSheetTab(): Promise<{ id: string; title: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) throw new Error("Authentication required.");
 
   const { data, error } = await supabase
     .from("sheets")
     .insert({ owner_id: user.id, title: "Untitled sheet" })
-    .select("id")
+    .select("id, title")
     .single();
 
   if (error || !data) throw new Error("Failed to create sheet.");
-  redirect(`/sheets/${data.id}`);
+  return { id: data.id, title: data.title };
+}
+
+/** 탭 시스템용: 시트 데이터 + 편집 가능 여부를 한 번에 조회. */
+export async function getSheetForTab(id: string) {
+  const { userId, profile } = await requireUser();
+  const supabase = await createClient();
+
+  const { data: sheet } = await supabase
+    .from("sheets")
+    .select("id, owner_id, title, data, is_public, updated_at")
+    .eq("id", id)
+    .single();
+
+  if (!sheet) return null;
+
+  let canEdit = sheet.owner_id === userId || profile.role === "admin";
+  if (!canEdit) {
+    const { data: perm } = await supabase
+      .from("sheet_permissions")
+      .select("permission")
+      .eq("sheet_id", id)
+      .eq("user_id", userId)
+      .maybeSingle();
+    canEdit = perm?.permission === "edit";
+  }
+
+  return {
+    id: sheet.id,
+    title: sheet.title,
+    data: sheet.data,
+    isPublic: sheet.is_public,
+    canEdit,
+    isOwner: sheet.owner_id === userId,
+    myShareId: userId,
+  };
 }
 
 export async function saveSheet(
