@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { createDocumentTab } from "./actions";
 import { DocumentsList } from "./documents-list";
 import { NewItemButton } from "../workspace/new-item-button";
+import { ImportDocumentButton } from "./import-document-button";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,10 @@ export default async function DocumentsPage() {
               Your own and shared documents. Content is stored as structured JSON.
             </p>
           </div>
-          <NewItemButton kind="document" label="New document" create={createDocumentTab} />
+          <div className="row" style={{ gap: 8 }}>
+            <ImportDocumentButton />
+            <NewItemButton kind="document" label="New document" create={createDocumentTab} />
+          </div>
         </div>
 
         <DocumentsList docs={docs ?? []} userId={userId} />
