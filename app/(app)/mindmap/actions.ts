@@ -121,6 +121,76 @@ export async function listWorkspaceItems(): Promise<WorkspaceItem[]> {
   return out;
 }
 
+/** Tiptap JSON 문서에서 순수 텍스트만 추출(미리보기용). */
+function extractText(node: unknown, out: string[], limit: number): void {
+  if (out.join("").length >= limit) return;
+  if (!node || typeof node !== "object") return;
+  const n = node as { type?: string; text?: string; content?: unknown[] };
+  if (n.type === "text" && typeof n.text === "string") out.push(n.text);
+  if (Array.isArray(n.content)) {
+    for (const child of n.content) {
+      if (out.join("").length >= limit) return;
+      extractText(child, out, limit);
+      if (n.type && n.type !== "text") out.push(" ");
+    }
+  }
+}
+
+export type ReferencePreview =
+  | { kind: "document"; title: string; snippet: string }
+  | { kind: "code"; title: string; language: string; snippet: string }
+  | { kind: "file"; title: string; sizeBytes: number | null; mimeType: string | null };
+
+/** 마인드맵 참조 노드 사이드 미리보기용: 대상 아이템의 요약 정보를 조회한다.
+ * 일반 supabase 클라이언트(RLS 적용)를 쓰므로 접근 권한이 없으면 null 이 온다. */
+export async function getReferencePreview(
+  kind: "file" | "code" | "document",
+  id: string
+): Promise<ReferencePreview | null> {
+  const supabase = await createClient();
+
+  if (kind === "document") {
+    const { data } = await supabase
+      .from("documents")
+      .select("title, content")
+      .eq("id", id)
+      .maybeSingle();
+    if (!data) return null;
+    const parts: string[] = [];
+    extractText(data.content, parts, 400);
+    const snippet = parts.join("").trim().slice(0, 400);
+    return { kind: "document", title: data.title || "Untitled", snippet };
+  }
+
+  if (kind === "code") {
+    const { data } = await supabase
+      .from("code_files")
+      .select("name, language, content")
+      .eq("id", id)
+      .maybeSingle();
+    if (!data) return null;
+    return {
+      kind: "code",
+      title: data.name,
+      language: data.language,
+      snippet: (data.content ?? "").slice(0, 400),
+    };
+  }
+
+  const { data } = await supabase
+    .from("files")
+    .select("file_name, size_bytes, mime_type")
+    .eq("id", id)
+    .maybeSingle();
+  if (!data) return null;
+  return {
+    kind: "file",
+    title: data.file_name,
+    sizeBytes: data.size_bytes,
+    mimeType: data.mime_type,
+  };
+}
+
 export async function shareMindMap(
   mapId: string,
   recipientId: string,

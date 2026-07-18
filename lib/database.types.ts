@@ -339,6 +339,10 @@ export interface Database {
           storage_bytes: number;
         }[];
       };
+      admin_orphaned_media: {
+        Args: Record<string, never>;
+        Returns: { name: string; bytes: number; created_at: string }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

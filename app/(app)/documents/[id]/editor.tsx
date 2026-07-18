@@ -12,9 +12,10 @@ import TextStyle from "@tiptap/extension-text-style";
 import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
-import Image from "@tiptap/extension-image";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import { ResizableImage } from "./resizable-image";
+import { SlashCommand } from "./slash-command";
 import type { Json } from "@/lib/database.types";
 import { createClient } from "@/lib/supabase/client";
 import { ShareDialog } from "@/components/share-dialog";
@@ -98,11 +99,12 @@ export function DocumentEditor({
       Color,
       Highlight.configure({ multicolor: true }),
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: "noopener noreferrer nofollow", target: "_blank" } }),
-      Image.configure({ HTMLAttributes: { class: "doc-media" } }),
+      ResizableImage.configure({ HTMLAttributes: { class: "doc-media" } }),
       TaskList,
       TaskItem.configure({ nested: true }),
       Video,
-      Placeholder.configure({ placeholder: "Write your idea here…" }),
+      Placeholder.configure({ placeholder: "Write your idea here… (type / for commands)" }),
+      SlashCommand,
     ],
     content: isTiptapDoc(initialContent) ? (initialContent as object) : "",
     editorProps: { attributes: { class: "ProseMirror" } },

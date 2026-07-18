@@ -21,10 +21,11 @@ import {
   type Edge,
   type Connection,
   type NodeProps,
+  type NodeMouseHandler,
 } from "@xyflow/react";
 import type { Json } from "@/lib/database.types";
 import { ShareDialog } from "@/components/share-dialog";
-import type { WorkspaceItem } from "../actions";
+import type { WorkspaceItem, ReferencePreview } from "../actions";
 import {
   saveMindMap,
   deleteMindMap,
@@ -32,7 +33,10 @@ import {
   shareMindMap,
   revokeMindMapShare,
   listMindMapShares,
+  getReferencePreview,
 } from "../actions";
+import { useWorkspace } from "../../workspace/workspace-context";
+import { formatBytes } from "@/lib/format";
 
 type SaveState = "saved" | "dirty" | "saving";
 const AUTOSAVE_MS = 1200;
@@ -66,21 +70,78 @@ function NoteNode({ id, data, selected }: NodeProps) {
 
 function RefNode({ data, selected }: NodeProps) {
   const d = data as unknown as RefData;
-  const href =
-    d.kind === "code" ? `/code/${d.refId}` : d.kind === "document" ? `/documents/${d.refId}` : "/files";
   return (
     <div className={`mm-node mm-ref k-${d.kind} ${selected ? "selected" : ""}`}>
       <Handle type="target" position={Position.Top} />
       <span className="mm-kind">{d.kind}</span>
-      <Link href={href} className="mm-label">
-        {d.label}
-      </Link>
+      <span className="mm-label">{d.label}</span>
       <Handle type="source" position={Position.Bottom} />
     </div>
   );
 }
 
 const nodeTypes = { note: NoteNode, ref: RefNode };
+
+// ---- auto layout ----
+// 외부 레이아웃 라이브러리(dagre 등) 없이 간단한 계층형(BFS) 레이아웃을 계산한다.
+// 들어오는 간선이 없는 노드를 루트(0단)로 두고, 각 단계를 가로로 중앙 정렬해
+// 배치한다. 고립 노드나 사이클에 걸린 노드는 마지막 단에 모아 배치한다.
+const LAYOUT_NODE_W = 220;
+const LAYOUT_NODE_H = 90;
+const LAYOUT_GAP_X = 40;
+const LAYOUT_GAP_Y = 110;
+
+function autoLayout(nodes: Node[], edges: Edge[]): Node[] {
+  if (nodes.length === 0) return nodes;
+
+  const incoming = new Map<string, number>();
+  const children = new Map<string, string[]>();
+  for (const n of nodes) {
+    incoming.set(n.id, 0);
+    children.set(n.id, []);
+  }
+  for (const e of edges) {
+    if (!children.has(e.source) || !incoming.has(e.target)) continue;
+    children.get(e.source)!.push(e.target);
+    incoming.set(e.target, (incoming.get(e.target) ?? 0) + 1);
+  }
+
+  const visited = new Set<string>();
+  const levels: string[][] = [];
+  let frontier = nodes.filter((n) => (incoming.get(n.id) ?? 0) === 0).map((n) => n.id);
+  if (frontier.length === 0) frontier = [nodes[0].id];
+
+  while (frontier.length > 0) {
+    const level = frontier.filter((id) => !visited.has(id));
+    if (level.length === 0) break;
+    levels.push(level);
+    for (const id of level) visited.add(id);
+    const nextSet = new Set<string>();
+    for (const id of level) {
+      for (const c of children.get(id) ?? []) {
+        if (!visited.has(c)) nextSet.add(c);
+      }
+    }
+    frontier = [...nextSet];
+  }
+
+  const leftover = nodes.map((n) => n.id).filter((id) => !visited.has(id));
+  if (leftover.length > 0) levels.push(leftover);
+
+  const positions = new Map<string, { x: number; y: number }>();
+  levels.forEach((level, li) => {
+    const rowWidth = level.length * LAYOUT_NODE_W + (level.length - 1) * LAYOUT_GAP_X;
+    const startX = -rowWidth / 2;
+    level.forEach((id, i) => {
+      positions.set(id, {
+        x: startX + i * (LAYOUT_NODE_W + LAYOUT_GAP_X),
+        y: li * (LAYOUT_NODE_H + LAYOUT_GAP_Y),
+      });
+    });
+  });
+
+  return nodes.map((n) => ({ ...n, position: positions.get(n.id) ?? n.position }));
+}
 
 function parseGraph(data: Json): { nodes: Node[]; edges: Edge[] } {
   if (data && typeof data === "object" && !Array.isArray(data)) {
@@ -110,6 +171,8 @@ function Inner({
   items: WorkspaceItem[];
 }) {
   const router = useRouter();
+  const { openTab } = useWorkspace();
+  const { fitView } = useReactFlow();
   const initial = useMemo(() => parseGraph(initialData), [initialData]);
   const [nodes, setNodes, onNodesChange] = useNodesState(initial.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges);
@@ -119,6 +182,10 @@ function Inner({
   const [showShare, setShowShare] = useState(false);
   const [pick, setPick] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ data: RefData } | null>(null);
+  const [previewInfo, setPreviewInfo] = useState<
+    { status: "loading" } | { status: "ready"; data: ReferencePreview } | { status: "error" } | null
+  >(null);
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skip = useRef(true);
@@ -218,6 +285,47 @@ function Inner({
     persist();
   };
 
+  const runAutoLayout = useCallback(() => {
+    if (!canEdit) return;
+    setNodes((nds) => autoLayout(nds, edges));
+    requestAnimationFrame(() => fitView({ duration: 300 }));
+  }, [canEdit, edges, setNodes, fitView]);
+
+  const onNodeClick: NodeMouseHandler = useCallback((_e, node) => {
+    if (node.type !== "ref") return;
+    setPreview({ data: node.data as unknown as RefData });
+  }, []);
+
+  const closePreview = useCallback(() => {
+    setPreview(null);
+    setPreviewInfo(null);
+  }, []);
+
+  useEffect(() => {
+    if (!preview) return;
+    let cancelled = false;
+    setPreviewInfo({ status: "loading" });
+    getReferencePreview(preview.data.kind, preview.data.refId)
+      .then((data) => {
+        if (cancelled) return;
+        setPreviewInfo(data ? { status: "ready", data } : { status: "error" });
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewInfo({ status: "error" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [preview]);
+
+  const openPreviewInTab = () => {
+    if (!preview) return;
+    const { kind, refId, label } = preview.data;
+    if (kind === "file") return; // 파일은 탭 종류에 포함되지 않음 — /files 로 안내
+    openTab(kind, refId, label);
+    closePreview();
+  };
+
   const togglePublic = async () => {
     const next = !pub;
     setPub(next);
@@ -268,6 +376,14 @@ function Inner({
               </select>
               <button className="btn btn-sm" onClick={addReference} disabled={!pick}>
                 Add
+              </button>
+              <button
+                className="btn btn-sm"
+                onClick={runAutoLayout}
+                disabled={nodes.length === 0}
+                title="Arrange nodes into a top-down layered layout"
+              >
+                Auto layout
               </button>
             </>
           )}
@@ -321,6 +437,8 @@ function Inner({
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeClick={onNodeClick}
+          onPaneClick={closePreview}
           nodeTypes={nodeTypes}
           nodesDraggable={canEdit}
           nodesConnectable={canEdit}
@@ -332,6 +450,53 @@ function Inner({
           <Controls showInteractive={false} />
           <MiniMap pannable zoomable />
         </ReactFlow>
+
+        {preview && (
+          <div className="mm-preview">
+            <div className="mm-preview-head">
+              <span className="mm-preview-kind">{preview.data.kind}</span>
+              <button className="mm-preview-close" onClick={closePreview} aria-label="Close preview">✕</button>
+            </div>
+            {previewInfo?.status === "loading" && (
+              <div className="mm-preview-body muted">Loading…</div>
+            )}
+            {previewInfo?.status === "error" && (
+              <div className="mm-preview-body muted">Not found or access denied.</div>
+            )}
+            {previewInfo?.status === "ready" && (
+              <div className="mm-preview-body">
+                <div className="mm-preview-title">{previewInfo.data.title}</div>
+                {previewInfo.data.kind === "document" && (
+                  <p className="mm-preview-snippet">
+                    {previewInfo.data.snippet || "Empty document."}
+                  </p>
+                )}
+                {previewInfo.data.kind === "code" && (
+                  <>
+                    <span className="mm-preview-meta">{previewInfo.data.language}</span>
+                    <pre className="mm-preview-code">{previewInfo.data.snippet || "// Empty file"}</pre>
+                  </>
+                )}
+                {previewInfo.data.kind === "file" && (
+                  <span className="mm-preview-meta">
+                    {previewInfo.data.mimeType || "Unknown type"} · {formatBytes(previewInfo.data.sizeBytes)}
+                  </span>
+                )}
+              </div>
+            )}
+            <div className="mm-preview-actions">
+              {preview.data.kind === "file" ? (
+                <Link href="/files" className="btn btn-sm btn-primary" onClick={closePreview}>
+                  Open in Files
+                </Link>
+              ) : (
+                <button className="btn btn-sm btn-primary" onClick={openPreviewInTab}>
+                  Open
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {showShare && (

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { GenerateCode } from "./generate-code";
+import { MediaGc } from "./media-gc";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +53,15 @@ export default async function AdminConsolePage() {
           </div>
           <div className="panel-body">
             <GenerateCode />
+          </div>
+        </div>
+
+        <div className="panel" style={{ marginBottom: 24 }}>
+          <div className="panel-header">
+            <span className="label">MEDIA STORAGE CLEANUP</span>
+          </div>
+          <div className="panel-body">
+            <MediaGc />
           </div>
         </div>
 

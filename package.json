@@ -43,6 +43,7 @@
     "@tiptap/pm": "^2.9.1",
     "@tiptap/react": "^2.9.1",
     "@tiptap/starter-kit": "^2.9.1",
+    "@tiptap/suggestion": "^2.27.2",
     "@xyflow/react": "^12.11.2",
     "codemirror": "^6.0.2",
     "next": "^15.5.20",
