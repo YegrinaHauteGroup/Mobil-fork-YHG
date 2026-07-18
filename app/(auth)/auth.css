@@ -17,6 +17,11 @@
     ),
     var(--bg-0);
 }
+/* 로그인 화면 전용: 카드/제목을 없애 콘텐츠가 짧아졌으므로 뷰포트 안에
+   항상 들어맞는다 — 위아래 스크롤 자체를 막아 스크롤 흔들림을 없앤다. */
+.auth-wrap-noscroll {
+  overflow-y: hidden;
+}
 .auth-card {
   width: 100%;
   max-width: 380px;

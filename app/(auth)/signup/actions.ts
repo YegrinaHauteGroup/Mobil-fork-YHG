@@ -14,6 +14,7 @@ export async function signup(
 ): Promise<SignupState> {
   const email = String(formData.get("email") || "").trim();
   const password = String(formData.get("password") || "");
+  const passwordConfirm = String(formData.get("password_confirm") || "");
   const displayName = String(formData.get("display_name") || "").trim();
 
   if (!email || !password) {
@@ -21,6 +22,9 @@ export async function signup(
   }
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };
+  }
+  if (password !== passwordConfirm) {
+    return { error: "Passwords do not match." };
   }
 
   const supabase = await createClient();

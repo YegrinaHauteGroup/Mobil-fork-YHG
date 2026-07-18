@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { formatBytes, formatDate } from "@/lib/format";
+import { deleteUser } from "../actions";
 
 type UserRow = {
   id: string;
@@ -17,8 +19,39 @@ type UserRow = {
   storage_bytes: number;
 };
 
-export function UserTable({ users }: { users: UserRow[] }) {
+export function UserTable({
+  users,
+  currentUserId,
+}: {
+  users: UserRow[];
+  currentUserId: string;
+}) {
   const [query, setQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  const handleDelete = (user: UserRow) => {
+    if (
+      !window.confirm(
+        `Delete ${user.email}? This permanently removes the account and all of its content.`
+      )
+    ) {
+      return;
+    }
+    setError(null);
+    setPendingId(user.id);
+    startTransition(async () => {
+      const result = await deleteUser(user.id);
+      setPendingId(null);
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    });
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -45,6 +78,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
+      {error && <div className="notice notice-error">{error}</div>}
       {users.length === 0 ? (
         <div className="empty">No users.</div>
       ) : filtered.length === 0 ? (
@@ -64,6 +98,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
               <th style={{ width: 60 }} className="col-hide-mobile">Graph</th>
               <th style={{ width: 100 }}>Storage</th>
               <th style={{ width: 160 }} className="col-hide-mobile">Joined</th>
+              <th style={{ width: 70 }} />
             </tr>
           </thead>
           <tbody>
@@ -88,6 +123,18 @@ export function UserTable({ users }: { users: UserRow[] }) {
                 <td className="mono muted">{formatBytes(u.storage_bytes)}</td>
                 <td className="mono muted col-hide-mobile" style={{ fontSize: 12 }}>
                   {formatDate(u.created_at)}
+                </td>
+                <td>
+                  {u.id !== currentUserId && (
+                    <button
+                      type="button"
+                      className="btn btn-danger btn-sm"
+                      disabled={isPending && pendingId === u.id}
+                      onClick={() => handleDelete(u)}
+                    >
+                      {isPending && pendingId === u.id ? "Deleting…" : "Delete"}
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}

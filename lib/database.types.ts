@@ -334,6 +334,10 @@ export interface Database {
         Args: { p_user_id: string };
         Returns: undefined;
       };
+      admin_delete_user: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
       list_users_by_approval: {
         Args: { p_status: string | null };
         Returns: {
