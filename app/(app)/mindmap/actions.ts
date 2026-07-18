@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
@@ -11,7 +10,11 @@ import { extractTagsFromText, extractMindmapPlainText } from "@/lib/tags";
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 /** 탭 시스템용: 리다이렉트 없이 새 마인드맵을 만들고 id/title 만 반환. */
-export async function createMindMapTab(): Promise<{ id: string; title: string }> {
+export async function createMindMapTab(): Promise<{
+  id: string;
+  title: string;
+  seed: unknown;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -21,11 +24,29 @@ export async function createMindMapTab(): Promise<{ id: string; title: string }>
   const { data, error } = await supabase
     .from("mind_maps")
     .insert({ owner_id: user.id, title: "Untitled map" })
-    .select("id, title")
+    .select("id, title, data")
     .single();
 
   if (error || !data) throw new Error("Failed to create map.");
-  return { id: data.id, title: data.title };
+
+  // 참조 노드 선택기가 필요로 하는 목록 — getMindMapForTab 과 동일하게 채워야
+  // 시드가 완전한 대체물이 된다(그렇지 않으면 새 마인드맵에서 참조를 못 고름).
+  const items = await listWorkspaceItems();
+
+  return {
+    id: data.id,
+    title: data.title,
+    seed: {
+      id: data.id,
+      title: data.title,
+      data: data.data,
+      isPublic: false,
+      canEdit: true,
+      isOwner: true,
+      myShareId: user.id,
+      items,
+    },
+  };
 }
 
 /** 탭 시스템용: 마인드맵 데이터 + 편집 가능 여부 + 참조 아이템 목록을 조회. */
@@ -103,7 +124,6 @@ export async function saveMindMap(
       );
   });
 
-  revalidatePath(`/mindmap/${id}`);
   return { ok: true };
 }
 
@@ -121,7 +141,6 @@ export async function deleteMindMap(id: string): Promise<ActionResult> {
       () => {}
     );
   });
-  revalidatePath("/mindmap");
   return { ok: true };
 }
 
@@ -135,7 +154,6 @@ export async function setMindMapPublic(
     .update({ is_public: isPublic })
     .eq("id", id);
   if (error) return { ok: false, error: "Update failed." };
-  revalidatePath(`/mindmap/${id}`);
   return { ok: true };
 }
 
@@ -254,7 +272,6 @@ export async function shareMindMap(
       ok: false,
       error: "Failed to grant access. Check that the Share ID belongs to an existing user.",
     };
-  revalidatePath(`/mindmap/${mapId}`);
   return { ok: true };
 }
 

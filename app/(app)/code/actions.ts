@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
@@ -10,7 +9,11 @@ import { extractTagsFromText } from "@/lib/tags";
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
 /** 탭 시스템용: 리다이렉트 없이 새 코드 파일을 만들고 id/name 만 반환. */
-export async function createCodeFileTab(): Promise<{ id: string; title: string }> {
+export async function createCodeFileTab(): Promise<{
+  id: string;
+  title: string;
+  seed: unknown;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -20,7 +23,7 @@ export async function createCodeFileTab(): Promise<{ id: string; title: string }
   const { data, error } = await supabase
     .from("code_files")
     .insert({ owner_id: user.id, name: "untitled.txt", language: "plaintext" })
-    .select("id, name")
+    .select("id, name, language, content")
     .single();
 
   if (error || !data) throw new Error("Failed to create code file.");
@@ -34,7 +37,20 @@ export async function createCodeFileTab(): Promise<{ id: string; title: string }
     })
   );
 
-  return { id: data.id, title: data.name };
+  return {
+    id: data.id,
+    title: data.name,
+    seed: {
+      id: data.id,
+      name: data.name,
+      language: data.language,
+      content: data.content,
+      isPublic: false,
+      canEdit: true,
+      isOwner: true,
+      myShareId: user.id,
+    },
+  };
 }
 
 /** 탭 시스템용: 코드 파일 데이터 + 편집 가능 여부를 한 번에 조회. */
@@ -112,7 +128,6 @@ export async function saveCodeFile(
       );
   });
 
-  revalidatePath(`/code/${id}`);
   return { ok: true };
 }
 
@@ -130,7 +145,6 @@ export async function deleteCodeFile(id: string): Promise<ActionResult> {
       () => {}
     );
   });
-  revalidatePath("/code");
   return { ok: true };
 }
 
@@ -144,7 +158,6 @@ export async function setCodeFilePublic(
     .update({ is_public: isPublic })
     .eq("id", id);
   if (error) return { ok: false, error: "Update failed." };
-  revalidatePath(`/code/${id}`);
   return { ok: true };
 }
 
@@ -192,7 +205,6 @@ export async function shareCodeFile(
     };
   }
 
-  revalidatePath(`/code/${codeFileId}`);
   return { ok: true };
 }
 

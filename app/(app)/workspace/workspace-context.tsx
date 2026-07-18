@@ -33,7 +33,7 @@ const STORAGE_KEY = "mobil.workspace.v1";
 const MIN_SPLIT = 20;
 const MAX_SPLIT = 80;
 
-function tabId(kind: TabKind, itemId: string) {
+export function tabId(kind: TabKind, itemId: string) {
   return `${kind}:${itemId}`;
 }
 
@@ -59,7 +59,8 @@ type WorkspaceCtx = {
   split: boolean;
   splitPct: number;
   open: boolean;
-  openTab: (kind: TabKind, itemId: string, title: string) => void;
+  openTab: (kind: TabKind, itemId: string, title: string, seed?: unknown) => void;
+  consumeSeed: (id: string) => unknown | undefined;
   closeTab: (id: string) => void;
   focusTab: (id: string, pane?: Pane) => void;
   setPaneTab: (pane: Pane, id: string | null) => void;
@@ -82,6 +83,16 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   }));
   const hydrated = useRef(false);
 
+  // 방금 생성한 항목을 열 때 TabContent 가 서버에 다시 조회하지 않도록 넘겨주는
+  // 임시 시드 저장소. localStorage 에 영속화하면 안 되므로(새로고침 후에는
+  // 최신 서버 데이터를 다시 조회해야 함) state 밖의 ref 로 따로 둔다.
+  const seedStore = useRef<Map<string, unknown>>(new Map());
+  const consumeSeed = useCallback((id: string) => {
+    const seed = seedStore.current.get(id);
+    seedStore.current.delete(id);
+    return seed;
+  }, []);
+
   // 최초 마운트에만 localStorage 복원 (SSR 하이드레이션 불일치 방지)
   useEffect(() => {
     setState(loadInitial());
@@ -93,8 +104,9 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  const openTab = useCallback((kind: TabKind, itemId: string, title: string) => {
+  const openTab = useCallback((kind: TabKind, itemId: string, title: string, seed?: unknown) => {
     const id = tabId(kind, itemId);
+    if (seed !== undefined) seedStore.current.set(id, seed);
     setState((s) => {
       const exists = s.tabs.some((t) => t.id === id);
       const tabs = exists ? s.tabs : [...s.tabs, { id, kind, itemId, title }];
@@ -161,6 +173,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       splitPct: state.splitPct,
       open: state.open,
       openTab,
+      consumeSeed,
       closeTab,
       focusTab,
       setPaneTab,
@@ -169,7 +182,7 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
       hide,
       renameTab,
     }),
-    [state, openTab, closeTab, focusTab, setPaneTab, toggleSplit, setSplitPct, hide, renameTab]
+    [state, openTab, consumeSeed, closeTab, focusTab, setPaneTab, toggleSplit, setSplitPct, hide, renameTab]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

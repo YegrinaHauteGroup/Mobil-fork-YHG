@@ -12,7 +12,9 @@ export function ImportItemButton({
   kind: TabKind;
   label: string;
   accept: string;
-  importAction: (formData: FormData) => Promise<{ id: string; title: string } | { error: string }>;
+  importAction: (
+    formData: FormData
+  ) => Promise<{ id: string; title: string; seed: unknown } | { error: string }>;
 }) {
   const { openTab } = useWorkspace();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -31,7 +33,7 @@ export function ImportItemButton({
       formData.set("file", file);
       const res = await importAction(formData);
       if ("error" in res) setError(res.error);
-      else openTab(kind, res.id, res.title);
+      else openTab(kind, res.id, res.title, res.seed);
     } finally {
       setPending(false);
       if (inputRef.current) inputRef.current.value = "";

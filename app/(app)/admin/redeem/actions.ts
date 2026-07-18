@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export type RedeemState = { error: string } | { ok: true } | null;
@@ -20,6 +19,5 @@ export async function redeemCode(
     return { error: "Invalid or already-used code." };
   }
 
-  revalidatePath("/", "layout");
   return { ok: true };
 }
