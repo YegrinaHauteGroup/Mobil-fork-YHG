@@ -106,6 +106,10 @@ export async function deleteCodeFile(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("code_files").delete().eq("id", id);
   if (error) return { ok: false, error: "Delete failed." };
+  await supabase.rpc("cleanup_object_links", { p_kind: "code", p_id: id }).then(
+    () => {},
+    () => {}
+  );
   revalidatePath("/code");
   return { ok: true };
 }

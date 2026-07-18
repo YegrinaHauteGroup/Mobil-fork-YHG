@@ -89,6 +89,11 @@ export async function deleteFile(fileId: string): Promise<ActionResult> {
 
   if (rowErr) return { ok: false, error: "Failed to delete metadata." };
 
+  await supabase.rpc("cleanup_object_links", { p_kind: "file", p_id: fileId }).then(
+    () => {},
+    () => {}
+  );
+
   const {
     data: { user },
   } = await supabase.auth.getUser();

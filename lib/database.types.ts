@@ -343,6 +343,38 @@ export interface Database {
         Args: Record<string, never>;
         Returns: { name: string; bytes: number; created_at: string }[];
       };
+      search_ontology: {
+        Args: { p_query: string };
+        Returns: {
+          kind: string;
+          id: string;
+          title: string;
+          snippet: string;
+          rank: number;
+          updated_at: string;
+        }[];
+      };
+      get_linked_objects: {
+        Args: { p_kind: string; p_id: string };
+        Returns: { kind: string; id: string; title: string; link_source: string }[];
+      };
+      sync_object_links: {
+        Args: {
+          p_source: string;
+          p_from_kind: string;
+          p_from_id: string;
+          p_links: { to_kind: string; to_id: string }[];
+        };
+        Returns: undefined;
+      };
+      cleanup_object_links: {
+        Args: { p_kind: string; p_id: string };
+        Returns: undefined;
+      };
+      can_view_object: {
+        Args: { p_kind: string; p_id: string };
+        Returns: boolean;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

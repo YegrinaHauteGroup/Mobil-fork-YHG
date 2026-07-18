@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
+import { extractMindmapLinks } from "@/lib/ontology-links";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -74,6 +75,21 @@ export async function saveMindMap(
     .update({ title: title.trim() || "Untitled map", data })
     .eq("id", id);
   if (error) return { ok: false, error: "Save failed." };
+
+  // 온톨로지 링크 그래프 동기화 — 실패해도 저장 자체는 이미 성공했으므로
+  // 무시한다(검색·연결 미리보기가 약간 뒤처질 뿐, 데이터 유실 아님).
+  await supabase
+    .rpc("sync_object_links", {
+      p_source: `mindmap:${id}`,
+      p_from_kind: "mindmap",
+      p_from_id: id,
+      p_links: extractMindmapLinks(data),
+    })
+    .then(
+      () => {},
+      () => {}
+    );
+
   revalidatePath(`/mindmap/${id}`);
   return { ok: true };
 }
@@ -82,6 +98,10 @@ export async function deleteMindMap(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("mind_maps").delete().eq("id", id);
   if (error) return { ok: false, error: "Delete failed." };
+  await supabase.rpc("cleanup_object_links", { p_kind: "mindmap", p_id: id }).then(
+    () => {},
+    () => {}
+  );
   revalidatePath("/mindmap");
   return { ok: true };
 }
