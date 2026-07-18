@@ -1,6 +1,10 @@
-# Mobil
+# Mobil (H-1 Prototype, beta v1.3)
 
 Schema Tool for Users. Orchestrate Intelligence.
+
+Last Update in July 18, v1.3 by Haewon Jeong
+Co-development with Yegrina Haute Group Infrastructrue.
+more info in www.officialyegrina.com
 
 > Deployment Archive for Infrastructure
 
@@ -14,13 +18,15 @@ Schema Tool for Users. Orchestrate Intelligence.
 - 전 테이블 **RLS(행 수준 보안)** 적용, 모든 PK 는 UUID v4
 
 
-보안·최적화: 전 라우트에 보안 헤더(CSP · X-Frame-Options · HSTS · nosniff 등)를
+## Mobil이 제공하는 보안·최적화 시스템
+
+전 라우트에 보안 헤더(CSP · X-Frame-Options · HSTS · nosniff 등)를
 `middleware.ts` 에서 경로별로 적용하고(상세는 `lib/security-headers.ts` 참고 —
 `/sheets` 만 스프레드시트 코어 라이브러리가 요구하는 `unsafe-eval` 을 예외적으로
 허용), Tiptap·CodeMirror·React Flow·스프레드시트 에디터는 모두 지연 로딩
 (`ssr:false` 동적 임포트)으로 초기 번들에서 분리합니다.
 
-## 기능
+## Mobil 주요 기능
 
 | 영역 | 내용 |
 | --- | --- |
