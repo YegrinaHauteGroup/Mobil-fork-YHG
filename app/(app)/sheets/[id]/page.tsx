@@ -39,9 +39,9 @@ export default async function SheetEditorPage({
       <div className="topbar">
         <div className="row" style={{ gap: 12 }}>
           <Link href="/sheets" className="btn btn-ghost btn-sm">
-            ← Sheets
+            ← Table
           </Link>
-          <span className="crumb">WORKSPACE / SHEETS / {sheet.id.slice(0, 8)}</span>
+          <span className="crumb">WORKSPACE / TABLE / {sheet.id.slice(0, 8)}</span>
         </div>
         <span className="crumb">{canEdit ? "READ · WRITE" : "READ ONLY"}</span>
       </div>

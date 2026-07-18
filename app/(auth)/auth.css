@@ -1,6 +1,11 @@
 /* 인증 화면 공용 레이아웃 */
 .auth-wrap {
+  /* body 에 overflow:hidden 이 걸려 있으므로(앱 셸 헤더 고정용) 인증 화면은
+     자체적으로 세로 스크롤을 갖는다 — 화면이 낮은 기기에서 폼이 잘리지 않게. */
   min-height: 100vh;
+  min-height: 100dvh;
+  height: 100%;
+  overflow-y: auto;
   display: flex;
   align-items: center;
   justify-content: center;

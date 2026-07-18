@@ -1,6 +1,8 @@
 "use client";
 
 import "./workspace.css";
+import { useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useWorkspace } from "./workspace-context";
 import { TabBar } from "./tab-bar";
 import { PaneView } from "./pane-view";
@@ -18,7 +20,21 @@ import { PaneView } from "./pane-view";
  */
 export function WorkspaceShell({ children }: { children: React.ReactNode }) {
   const { tabs, open } = useWorkspace();
+  const router = useRouter();
   const showPanes = tabs.length > 0 && open;
+
+  // 편집기(패널)에서 목록/현재 라우트로 돌아오는 "그 순간"에만 서버 컴포넌트를
+  // 한 번 새로고침한다. 자동저장은 revalidatePath 를 호출하지 않으므로(과거의
+  // 재조회 폭주 원인이었음), 편집한 제목/내용이 목록에 반영되게 하려면 편집을
+  // 마치고 목록으로 나올 때 딱 한 번 갱신해 주면 된다 — 키 입력마다가 아니라
+  // 패널→목록 전환 1회. showPanes 가 true→false 로 바뀔 때만 실행한다.
+  const prevShowPanes = useRef(showPanes);
+  useEffect(() => {
+    if (prevShowPanes.current && !showPanes) {
+      router.refresh();
+    }
+    prevShowPanes.current = showPanes;
+  }, [showPanes, router]);
 
   return (
     <div className="wk-shell">

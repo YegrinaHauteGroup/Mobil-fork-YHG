@@ -57,11 +57,11 @@ export function UserTable({ users }: { users: UserRow[] }) {
               <th>Email</th>
               <th className="col-hide-mobile">Name</th>
               <th style={{ width: 80 }}>Role</th>
-              <th style={{ width: 60 }} className="col-hide-mobile">Docs</th>
-              <th style={{ width: 60 }} className="col-hide-mobile">Files</th>
+              <th style={{ width: 60 }} className="col-hide-mobile">Docs +</th>
+              <th style={{ width: 60 }} className="col-hide-mobile">Repo</th>
               <th style={{ width: 60 }} className="col-hide-mobile">Code</th>
-              <th style={{ width: 60 }} className="col-hide-mobile">Sheets</th>
-              <th style={{ width: 60 }} className="col-hide-mobile">Maps</th>
+              <th style={{ width: 60 }} className="col-hide-mobile">Table</th>
+              <th style={{ width: 60 }} className="col-hide-mobile">Graph</th>
               <th style={{ width: 100 }}>Storage</th>
               <th style={{ width: 160 }} className="col-hide-mobile">Joined</th>
             </tr>

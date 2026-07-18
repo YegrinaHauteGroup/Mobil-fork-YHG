@@ -42,9 +42,9 @@ export default async function MindMapEditorPage({
       <div className="topbar">
         <div className="row" style={{ gap: 12 }}>
           <Link href="/mindmap" className="btn btn-ghost btn-sm">
-            ← Mindmap
+            ← Link Graph
           </Link>
-          <span className="crumb">WORKSPACE / MINDMAP / {map.id.slice(0, 8)}</span>
+          <span className="crumb">WORKSPACE / LINK GRAPH / {map.id.slice(0, 8)}</span>
         </div>
         <span className="crumb">{canEdit ? "READ · WRITE" : "READ ONLY"}</span>
       </div>

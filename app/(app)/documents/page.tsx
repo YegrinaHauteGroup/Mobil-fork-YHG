@@ -19,13 +19,13 @@ export default async function DocumentsPage() {
   return (
     <>
       <div className="topbar">
-        <span className="topbar-title">Documents</span>
-        <span className="crumb">WORKSPACE / DOCUMENTS</span>
+        <span className="topbar-title">Docs +</span>
+        <span className="crumb">WORKSPACE / DOCS +</span>
       </div>
       <div className="content">
         <div className="page-head">
           <div>
-            <h1 className="page-h">Documents</h1>
+            <h1 className="page-h">Docs +</h1>
             <p className="page-sub">
               Your own and shared documents. Content is stored as structured JSON.
             </p>

@@ -190,7 +190,7 @@ export function FilesClient({
     >
       <div className="page-head">
         <div>
-          <h1 className="page-h">File Storage</h1>
+          <h1 className="page-h">Repository</h1>
           <p className="page-sub">
             Your own and shared files. Drag & drop files here to upload.
           </p>

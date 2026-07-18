@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { IconSettings, IconSignOut, IconMenu } from "./icons";
+import { IconMenu } from "./icons";
 import { useWorkspace } from "./workspace/workspace-context";
 import { useMobileNav } from "./mobile-nav-context";
 import { HeaderSearch } from "./header-search";
@@ -58,10 +58,14 @@ export function AppHeader({
           <span className="avatar">{initial}</span>
           <span className="acct-name">{name}</span>
           {role === "admin" && <span className="badge badge-admin">admin</span>}
-          <span className="acct-caret">▾</span>
         </button>
         {open && (
           <div className="acct-menu">
+            <div className="acct-license">
+              <div className="acct-license-title">Mobil 1.0</div>
+              <div className="acct-license-line">Developed by Haewon Jeong</div>
+              <div className="acct-license-line">Apache License 2.0</div>
+            </div>
             <div className="acct-head">
               <div className="n">{name}</div>
               <div className="e">{email}</div>
@@ -74,12 +78,10 @@ export function AppHeader({
                 hide();
               }}
             >
-              <IconSettings size={16} />
               Settings
             </Link>
             <form action="/auth/signout" method="post">
               <button type="submit" className="acct-item danger">
-                <IconSignOut size={16} />
                 Sign out
               </button>
             </form>

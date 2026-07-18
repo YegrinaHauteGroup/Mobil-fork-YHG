@@ -265,6 +265,16 @@
   .mm-bar {
     padding: 8px 14px;
   }
+  /* 액션 버튼 묶음이 한 줄에 못 들어가면 줄바꿈(화면 밖 이탈 방지). */
+  .mm-bar > .row {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 6px;
+    min-width: 0;
+  }
+  .mm-bar-left {
+    flex-basis: 100%;
+  }
   .mm-picker {
     max-width: none;
     flex: 1;

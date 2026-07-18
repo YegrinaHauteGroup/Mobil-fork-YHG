@@ -33,7 +33,8 @@
 
 /* App shell: fixed header on top, icon rail + main below it. */
 .app {
-  height: 100vh;
+  height: 100vh; /* dvh 미지원 브라우저 폴백 */
+  height: 100dvh; /* 모바일 URL 바 표시/숨김에 따라 실제 가시 영역에 정확히 맞춘다 */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -63,6 +64,23 @@
   flex: 1;
   display: flex;
   justify-content: center;
+}
+/* 돋보기 아이콘 버튼 — 데스크톱/태블릿에서는 숨기고 모바일에서만 노출한다. */
+.hsearch-icon-btn {
+  display: none;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-1);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+.hsearch-icon-btn:hover {
+  background: var(--bg-3);
+  border-color: var(--border-1);
 }
 .hsearch-input {
   width: 100%;
@@ -253,6 +271,22 @@
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
   padding: 6px;
   z-index: 40;
+}
+.acct-license {
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--border-0);
+  margin-bottom: 6px;
+}
+.acct-license-title {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--text-0);
+}
+.acct-license-line {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 2px;
 }
 .acct-head {
   padding: 8px 10px 10px;
@@ -559,13 +593,32 @@
     font-size: 17px;
   }
 
-  /* 검색창 — 로고/계정 메뉴와 겹치지 않도록 축소. 드롭다운은 화면 폭에
-     맞춰 좌우 12px 여백만 남기고 꽉 채운다(중앙 정렬 transform 제거). */
+  /* 검색창은 돋보기 아이콘으로 접는다(헤더 가로 공간 절약). 아이콘을 누르면
+     입력창이 헤더 바로 아래에 좌우 8px 여백의 오버레이로 펼쳐진다. */
+  .hsearch {
+    flex: none;
+    justify-content: flex-end;
+  }
+  .hsearch-icon-btn {
+    display: flex;
+  }
   .hsearch-input {
+    display: none;
     max-width: none;
-    height: 30px;
-    font-size: 12.5px;
-    padding: 0 10px;
+    height: 38px;
+    font-size: 13px;
+    padding: 0 12px;
+  }
+  .hsearch.mobile-open .hsearch-input {
+    display: block;
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    top: calc(var(--header-h) + 6px);
+    width: auto;
+    z-index: 42;
+    background: var(--bg-2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   }
   .hsearch-dropdown {
     position: fixed;
@@ -576,6 +629,11 @@
     max-width: none;
     transform: none;
     max-height: calc(100vh - var(--header-h) - 16px);
+  }
+  /* 모바일 오버레이 입력이 열려 있을 때는 드롭다운을 입력창 아래로 내린다. */
+  .hsearch.mobile-open .hsearch-dropdown {
+    top: calc(var(--header-h) + 52px);
+    max-height: calc(100dvh - var(--header-h) - 64px);
   }
 
   .acct-menu {
@@ -644,15 +702,20 @@
   .page-head {
     flex-wrap: wrap;
   }
+  /* 모바일에서 현황/계급 카드(6개)를 더 작게 — 3열로 촘촘하게. */
   .stat-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 18px;
   }
   .stat {
-    padding: 12px 14px;
+    padding: 10px 8px;
   }
   .stat-val {
-    font-size: 20px;
+    font-size: 16px;
+  }
+  .stat-label {
+    margin-top: 4px;
   }
 }
 

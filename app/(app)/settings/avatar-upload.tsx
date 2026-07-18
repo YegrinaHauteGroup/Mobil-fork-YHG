@@ -48,7 +48,8 @@ export function AvatarUpload({
       const { error: upErr } = await supabase.storage
         .from(BUCKET)
         .upload(path, file, { contentType: file.type, upsert: true });
-      if (upErr) throw new Error("Upload failed.");
+      // 실제 스토리지 오류 메시지를 그대로 보여준다(RLS 거부 등 원인 파악용).
+      if (upErr) throw new Error(`Upload failed: ${upErr.message}`);
 
       const {
         data: { publicUrl },

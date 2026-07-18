@@ -24,7 +24,7 @@ export function SheetList({ sheets, userId }: { sheets: SheetRow[]; userId: stri
     <div className="panel">
       <div className="panel-header">
         <span className="label">
-          SHEETS ({filtered.length}
+          TABLE ({filtered.length}
           {query ? ` / ${sheets.length}` : ""})
         </span>
         <input
@@ -36,9 +36,9 @@ export function SheetList({ sheets, userId }: { sheets: SheetRow[]; userId: stri
         />
       </div>
       {sheets.length === 0 ? (
-        <div className="empty">No sheets yet. Use “New sheet” to start.</div>
+        <div className="empty">No tables yet. Use “New sheet” to start.</div>
       ) : filtered.length === 0 ? (
-        <div className="empty">No sheets match “{query}”.</div>
+        <div className="empty">No tables match “{query}”.</div>
       ) : (
         <div className="table-scroll">
         <table className="table">
