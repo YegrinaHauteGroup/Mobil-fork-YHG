@@ -6,8 +6,97 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
 import { extractTagsFromText } from "@/lib/tags";
+import {
+  importFileToSheetData,
+  exportSheetToCsv,
+  exportSheetToXlsxBuffer,
+  exportSheetToPdfBytes,
+} from "@/lib/sheet-convert";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
+
+const MAX_IMPORT_BYTES = 20 * 1024 * 1024; // 20MB
+
+/** 외부 csv/xlsx 파일을 읽어 새 시트로 만든다. */
+export async function importSheet(
+  formData: FormData
+): Promise<{ id: string; title: string } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Authentication required." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "No file provided." };
+  if (file.size > MAX_IMPORT_BYTES) return { error: "File is too large (max 20MB)." };
+
+  let imported;
+  try {
+    const bytes = Buffer.from(await file.arrayBuffer());
+    imported = await importFileToSheetData(file.name, bytes);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Could not read this file." };
+  }
+
+  const { data, error } = await supabase
+    .from("sheets")
+    .insert({ owner_id: user.id, title: imported.title, data: imported.data })
+    .select("id, title")
+    .single();
+
+  if (error || !data) return { error: "Failed to create sheet." };
+
+  after(async () => {
+    const tags = extractTagsFromText(data.title);
+    await supabase.rpc("sync_object_tags", { p_kind: "sheet", p_id: data.id, p_tag_names: tags }).then(
+      () => {},
+      () => {}
+    );
+  });
+
+  revalidatePath("/sheets");
+  return { id: data.id, title: data.title };
+}
+
+export type SheetExportFormat = "csv" | "xlsx" | "pdf";
+
+const EXPORT_MIME: Record<SheetExportFormat, string> = {
+  csv: "text/csv",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  pdf: "application/pdf",
+};
+
+/** 시트를 csv/xlsx/pdf 로 내보낸다. base64 로 반환해 클라이언트에서 다운로드시킨다. */
+export async function exportSheet(
+  id: string,
+  format: SheetExportFormat
+): Promise<{ fileName: string; mimeType: string; base64: string } | { error: string }> {
+  const supabase = await createClient();
+  const { data: sheet, error } = await supabase
+    .from("sheets")
+    .select("title, data")
+    .eq("id", id)
+    .single();
+  if (error || !sheet) return { error: "Sheet not found." };
+
+  const title = sheet.title || "Untitled sheet";
+  const safeName = title.replace(/[^\w.\-() ]+/g, "_") || "sheet";
+
+  try {
+    let bytes: Buffer | Uint8Array | string;
+    if (format === "csv") bytes = exportSheetToCsv(sheet.data);
+    else if (format === "xlsx") bytes = await exportSheetToXlsxBuffer(sheet.data);
+    else bytes = await exportSheetToPdfBytes(sheet.data, title);
+
+    const base64 =
+      typeof bytes === "string" ? Buffer.from(bytes, "utf-8").toString("base64") : Buffer.from(bytes).toString("base64");
+
+    return { fileName: `${safeName}.${format}`, mimeType: EXPORT_MIME[format], base64 };
+  } catch {
+    return { error: "Export failed." };
+  }
+}
 
 /** 탭 시스템용: 리다이렉트 없이 새 시트를 만들고 id/title 만 반환. */
 export async function createSheetTab(): Promise<{ id: string; title: string }> {

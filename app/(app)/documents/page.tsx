@@ -1,9 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { createDocumentTab } from "./actions";
+import { createDocumentTab, importDocument } from "./actions";
 import { DocumentsList } from "./documents-list";
 import { NewItemButton } from "../workspace/new-item-button";
-import { ImportDocumentButton } from "./import-document-button";
+import { ImportItemButton } from "../workspace/import-item-button";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,12 @@ export default async function DocumentsPage() {
             </p>
           </div>
           <div className="row" style={{ gap: 8 }}>
-            <ImportDocumentButton />
+            <ImportItemButton
+              kind="document"
+              label="Import file"
+              accept=".txt,.docx,.hwp,.hwpx"
+              importAction={importDocument}
+            />
             <NewItemButton kind="document" label="New document" create={createDocumentTab} />
           </div>
         </div>
