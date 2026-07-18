@@ -1,0 +1,79 @@
+.sh-shell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.sh-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--border-0);
+  background: var(--bg-1);
+  flex-wrap: wrap;
+}
+.sh-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+.sh-title {
+  min-width: 0;
+  flex: 1;
+  max-width: 360px;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-0);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  outline: none;
+}
+.sh-title:hover:not(:disabled) {
+  border-color: var(--border-1);
+}
+.sh-title:focus {
+  border-color: var(--steel);
+  background: var(--bg-0);
+}
+.save-state {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.save-state.dirty {
+  color: var(--warn);
+}
+.save-state.saved {
+  color: var(--ok);
+}
+
+/* fortune-sheet renders its own light-themed UI (grid, toolbar, formula bar).
+   Rather than fight ~3000+ lines of vendor CSS with an incomplete dark
+   reskin, it is framed as a light "page" inside the dark app shell — the
+   same treatment real spreadsheet apps get when embedded in a dark IDE. */
+.sh-canvas {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  padding: 14px;
+  background: var(--bg-0);
+}
+.sh-paper {
+  height: 100%;
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-1);
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}

@@ -7,10 +7,11 @@ export default async function DashboardPage() {
   const { userId, profile } = await requireUser();
   const supabase = await createClient();
 
-  const [filesRes, docsRes, codeRes, mapsRes, sharedDocsRes] = await Promise.all([
+  const [filesRes, docsRes, codeRes, sheetsRes, mapsRes, sharedDocsRes] = await Promise.all([
     supabase.from("files").select("id", { count: "exact", head: true }),
     supabase.from("documents").select("id", { count: "exact", head: true }),
     supabase.from("code_files").select("id", { count: "exact", head: true }),
+    supabase.from("sheets").select("id", { count: "exact", head: true }),
     supabase.from("mind_maps").select("id", { count: "exact", head: true }),
     supabase
       .from("documents")
@@ -22,6 +23,7 @@ export default async function DashboardPage() {
   const fileCount = filesRes.count ?? 0;
   const docCount = docsRes.count ?? 0;
   const codeCount = codeRes.count ?? 0;
+  const sheetCount = sheetsRes.count ?? 0;
   const mapCount = mapsRes.count ?? 0;
   const recentDocs = sharedDocsRes.data ?? [];
 
@@ -64,6 +66,10 @@ export default async function DashboardPage() {
           <div className="stat">
             <div className="stat-val">{fileCount}</div>
             <div className="stat-label label">FILES</div>
+          </div>
+          <div className="stat">
+            <div className="stat-val">{sheetCount}</div>
+            <div className="stat-label label">SHEETS</div>
           </div>
           <div className="stat">
             <div className="stat-val">{mapCount}</div>

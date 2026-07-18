@@ -7,6 +7,7 @@ import {
   IconFiles,
   IconDocuments,
   IconCode,
+  IconSheet,
   IconMindmap,
   IconKey,
   IconConsole,
@@ -18,6 +19,7 @@ const MAIN: Item[] = [
   { href: "/dashboard", label: "Dashboard", icon: <IconDashboard /> },
   { href: "/files", label: "Files", icon: <IconFiles /> },
   { href: "/documents", label: "Documents", icon: <IconDocuments /> },
+  { href: "/sheets", label: "Sheets", icon: <IconSheet /> },
   { href: "/code", label: "Code", icon: <IconCode /> },
   { href: "/mindmap", label: "Mindmap", icon: <IconMindmap /> },
 ];

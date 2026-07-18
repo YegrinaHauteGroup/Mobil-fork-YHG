@@ -12,16 +12,22 @@
 - **Supabase** — Postgres · Auth(email+password) · Storage
 - **@supabase/ssr** — 서버 컴포넌트/미들웨어 세션 처리
 - **Tiptap** — 문서 에디터 (콘텐츠는 JSON 으로 저장, HTML 직접 저장 배제로 XSS 방지)
+- **@fortune-sheet/react** — 스프레드시트 에디터 (Excel/Google Sheets 호환 UI, 수식·서식·다중 시트)
 - 전 테이블 **RLS(행 수준 보안)** 적용, 모든 PK 는 UUID v4
 
 디자인은 Oracle 계열 전문 DBMS 감성 + GitHub 다크 구조 + 2000년대 초 Gotham
 시스템의 투박함을 참고했습니다. 네온/글로우 없이 블랙·다크그레이 위주, 각진
-모서리와 모노스페이스 라벨을 사용합니다. 본문 폰트는 Noto Sans(라틴 자소는
-`next/font` 로 self-host, 한글은 시스템 폰트 폴백)를 가는~미디엄 굵기로 씁니다.
+모서리를 사용합니다. 본문 폰트는 Noto Sans(라틴 자소는 `next/font` 로 self-host,
+한글은 시스템 폰트 폴백)를 가는~미디엄 굵기로 씁니다. 상단 고정 헤더(로고 좌측,
+계정/설정 메뉴 우측) + 아이콘 전용 얇은 사이드바 레일 구조이며, 생성/추가 계열
+버튼은 초록, 삭제는 빨강으로 구분합니다. `g h/f/d/s/c/m` 같은 키보드 단축키와
+`?` 도움말 모달을 지원합니다(자세한 목록은 앱 내 `?` 참고).
 
 보안·최적화: 전 라우트에 보안 헤더(CSP · X-Frame-Options · HSTS · nosniff 등)를
-적용하고, Tiptap·CodeMirror 에디터는 지연 로딩(`ssr:false` 동적 임포트)으로
-초기 번들에서 분리합니다.
+`middleware.ts` 에서 경로별로 적용하고(상세는 `lib/security-headers.ts` 참고 —
+`/sheets` 만 스프레드시트 코어 라이브러리가 요구하는 `unsafe-eval` 을 예외적으로
+허용), Tiptap·CodeMirror·React Flow·스프레드시트 에디터는 모두 지연 로딩
+(`ssr:false` 동적 임포트)으로 초기 번들에서 분리합니다.
 
 ## 기능
 
@@ -32,7 +38,9 @@
 | 파일 | 업로드(드래그앤드롭 포함) · 다운로드(서명 URL) · 이름변경 · 삭제 · 공유(view/edit) · 검색 |
 | 문서 | 생성 · 조회 · 편집(자동/수동 저장) · 공유(view/edit) · 공개 토글 · 검색 |
 | 코드 | 웹 코드 에디터(CodeMirror 6) — 구문 강조 · 다국어 · 자동/수동 저장 · 다운로드 · 공유 · 공개 토글 · 검색 |
+| 시트 | 스프레드시트 에디터(@fortune-sheet) — 수식 · 서식 · 다중 시트 탭 · 자동/수동 저장 · 공유 · 공개 토글 · 검색 |
 | 마인드맵 | React Flow 캔버스 — 파일·코드·문서를 노드로 배치하고 상하관계(간선)로 연결 · 공유 · 공개 토글 |
+| 설정 | 표시 이름 변경, 이메일·권한·공유 ID 확인 |
 | 감사 | 주요 작업을 `audit_logs` 에 기록, 관리자 콘솔에서 조회 |
 
 문서 에디터는 서식(굵게/기울임/밑줄/취소선/코드), **글자 색상 · 형광펜**, 링크,
@@ -55,15 +63,22 @@
 ```
 app/
   (auth)/            로그인 · 회원가입
-  (app)/             인증 필요한 앱 셸 (사이드바 + 상단바)
+  (app)/             인증 필요한 앱 셸 (고정 헤더 + 아이콘 사이드바 레일)
+    header.tsx       고정 헤더 (로고 · 계정/설정 메뉴)
+    sidebar.tsx       아이콘 전용 사이드바 레일
+    shortcuts.tsx     전역 키보드 단축키 + 도움말 모달
     dashboard/       개요 · 내 공유 ID · 최근 문서
     files/           파일 저장소
     documents/[id]/  Tiptap 문서 에디터
     code/[id]/       CodeMirror 코드 에디터
+    sheets/[id]/     스프레드시트 에디터 (@fortune-sheet)
+    mindmap/[id]/    React Flow 마인드맵 캔버스
+    settings/        프로필 · 계정 설정
     admin/           코드 등록 · 관리자 콘솔
-components/codemirror/ 코드 에디터 래퍼 · 테마 · 언어 매핑
   auth/              콜백 · 로그아웃 라우트
+components/codemirror/ 코드 에디터 래퍼 · 테마 · 언어 매핑
 lib/supabase/        browser · server · middleware 클라이언트
+lib/security-headers.ts 경로별 CSP/보안 헤더 구성
 components/          공용 UI (모달 · 공유 다이얼로그 · 복사 필드)
 supabase/migrations/ DB 마이그레이션
 docs/                구축 지시서
@@ -90,6 +105,7 @@ npm install
    - `supabase/migrations/0007_fix_role_change_guard.sql` — role 자기승격 취약점 시정
    - `supabase/migrations/0008_media_bucket.sql` — 에디터 이미지/동영상용 공개 media 버킷
    - `supabase/migrations/0009_mind_maps.sql` — 마인드맵 테이블 · RLS
+   - `supabase/migrations/0010_sheets.sql` — 스프레드시트 테이블 · RLS
 
 > `0003` 은 가입 시 `profiles` 행을 자동 생성하는 트리거입니다. `0001` 은 profiles
 > INSERT 정책을 두지 않으므로, `auth.users` INSERT 시점의 SECURITY DEFINER 트리거로

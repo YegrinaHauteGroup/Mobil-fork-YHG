@@ -145,12 +145,8 @@ a:hover {
 .brand-logo:hover {
   text-decoration: none;
 }
-.brand-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 2px;
-  background: var(--create);
-  display: inline-block;
+.brand-logo-lg {
+  font-size: 30px;
 }
 
 /* -------------------------------------------------------------------------

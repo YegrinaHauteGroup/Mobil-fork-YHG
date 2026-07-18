@@ -34,7 +34,6 @@ export function AppHeader({
   return (
     <header className="app-header">
       <Link href="/dashboard" className="brand-logo">
-        <span className="brand-dot" />
         Mobil
       </Link>
 

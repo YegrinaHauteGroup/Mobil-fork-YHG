@@ -38,6 +38,20 @@
 .mm-title:hover:not(:disabled) {
   border-color: var(--border-1);
 }
+.save-state {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.save-state.dirty {
+  color: var(--warn);
+}
+.save-state.saved {
+  color: var(--ok);
+}
 .mm-title:focus {
   border-color: var(--steel);
   background: var(--bg-0);

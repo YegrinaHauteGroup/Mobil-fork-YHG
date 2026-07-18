@@ -13,7 +13,7 @@ export default async function LoginPage({
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-brand">
-          <span className="brand-logo"><span className="brand-dot" />Mobil</span>
+          <span className="brand-logo brand-logo-lg">Mobil</span>
         </div>
         <div className="auth-panel">
           <h1 className="auth-h">Sign in</h1>

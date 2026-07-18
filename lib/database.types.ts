@@ -182,6 +182,50 @@ export interface Database {
         };
         Relationships: [];
       };
+      sheets: {
+        Row: {
+          id: string;
+          owner_id: string;
+          title: string;
+          data: Json;
+          is_public: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          title?: string;
+          data?: Json;
+          is_public?: boolean;
+        };
+        Update: {
+          title?: string;
+          data?: Json;
+          is_public?: boolean;
+        };
+        Relationships: [];
+      };
+      sheet_permissions: {
+        Row: {
+          id: string;
+          sheet_id: string;
+          user_id: string;
+          permission: Permission;
+          granted_by: string;
+          granted_at: string;
+        };
+        Insert: {
+          sheet_id: string;
+          user_id: string;
+          permission: Permission;
+          granted_by: string;
+        };
+        Update: {
+          permission?: Permission;
+        };
+        Relationships: [];
+      };
       files: {
         Row: {
           id: string;

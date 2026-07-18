@@ -8,18 +8,19 @@ const NAV: Record<string, string> = {
   h: "/dashboard",
   f: "/files",
   d: "/documents",
+  s: "/sheets",
   c: "/code",
   m: "/mindmap",
-  s: "/settings",
 };
 
 const HELP: [string, string][] = [
   ["g h", "Go to Dashboard"],
   ["g f", "Go to Files"],
   ["g d", "Go to Documents"],
+  ["g s", "Go to Sheets"],
   ["g c", "Go to Code"],
   ["g m", "Go to Mindmap"],
-  ["g s", "Go to Settings"],
+  [",", "Go to Settings"],
   ["⌘/Ctrl S", "Save (in editors)"],
   ["?", "Toggle this help"],
 ];
@@ -73,6 +74,13 @@ export function Shortcuts() {
         gPending.current = true;
         if (gTimer.current) clearTimeout(gTimer.current);
         gTimer.current = setTimeout(() => (gPending.current = false), 1200);
+        return;
+      }
+
+      // , → Settings (common convention, e.g. Slack/Linear preferences)
+      if (e.key === ",") {
+        e.preventDefault();
+        router.push("/settings");
       }
     },
     [router]

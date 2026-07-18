@@ -44,6 +44,14 @@ export function IconCode({ size }: P) {
     </svg>
   );
 }
+export function IconSheet({ size }: P) {
+  return (
+    <svg {...base(size)}>
+      <rect x="3" y="3" width="18" height="18" rx="1.5" />
+      <path d="M3 9h18M3 15h18M9 3v18M15 3v18" />
+    </svg>
+  );
+}
 export function IconMindmap({ size }: P) {
   return (
     <svg {...base(size)}>
