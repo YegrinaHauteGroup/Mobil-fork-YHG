@@ -29,26 +29,41 @@ type StoredState = {
   open: boolean;
 };
 
-const STORAGE_KEY = "mobil.workspace.v1";
+const STORAGE_PREFIX = "mobil.workspace.v1";
+const LEGACY_STORAGE_KEY = "mobil.workspace.v1";
 const MIN_SPLIT = 20;
 const MAX_SPLIT = 80;
+
+// 열린 작업 탭은 사용자별로 분리해서 저장한다 — 전역 키를 쓰면 같은 브라우저에서
+// 다른 계정으로 로그인했을 때 이전 사용자의 탭이 그대로 뜬다(계정 간 누수).
+function storageKeyFor(userId: string) {
+  return `${STORAGE_PREFIX}.${userId}`;
+}
+
+function emptyState(): StoredState {
+  return { tabs: [], paneLeft: null, paneRight: null, split: false, splitPct: 50, open: false };
+}
 
 export function tabId(kind: TabKind, itemId: string) {
   return `${kind}:${itemId}`;
 }
 
-function loadInitial(): StoredState {
-  if (typeof window === "undefined") {
-    return { tabs: [], paneLeft: null, paneRight: null, split: false, splitPct: 50, open: false };
-  }
+function loadInitial(userId: string): StoredState {
+  if (typeof window === "undefined") return emptyState();
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(storageKeyFor(userId));
     if (!raw) throw new Error("empty");
     const parsed = JSON.parse(raw) as StoredState;
     if (!Array.isArray(parsed.tabs)) throw new Error("bad shape");
     return parsed;
   } catch {
-    return { tabs: [], paneLeft: null, paneRight: null, split: false, splitPct: 50, open: false };
+    // 계정 간 누수의 원인이던 전역(레거시) 키가 남아 있으면 정리한다.
+    try {
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    } catch {
+      /* noop */
+    }
+    return emptyState();
   }
 }
 
@@ -72,16 +87,18 @@ type WorkspaceCtx = {
 
 const Ctx = createContext<WorkspaceCtx | null>(null);
 
-export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<StoredState>(() => ({
-    tabs: [],
-    paneLeft: null,
-    paneRight: null,
-    split: false,
-    splitPct: 50,
-    open: false,
-  }));
-  const hydrated = useRef(false);
+export function WorkspaceProvider({
+  children,
+  userId,
+}: {
+  children: React.ReactNode;
+  userId: string;
+}) {
+  const [state, setState] = useState<StoredState>(emptyState);
+  // 마운트 직후 첫 저장(복원 전의 빈 상태)은 건너뛴다 — 저장된 탭을 빈 값으로
+  // 덮어쓰지 않기 위함. 이 컴포넌트는 layout 에서 key={userId} 로 감싸 사용자가
+  // 바뀌면 통째로 리마운트되므로, 이 플래그도 사용자별로 초기화된다.
+  const firstSave = useRef(true);
 
   // 방금 생성한 항목을 열 때 TabContent 가 서버에 다시 조회하지 않도록 넘겨주는
   // 임시 시드 저장소. localStorage 에 영속화하면 안 되므로(새로고침 후에는
@@ -93,16 +110,19 @@ export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
     return seed;
   }, []);
 
-  // 최초 마운트에만 localStorage 복원 (SSR 하이드레이션 불일치 방지)
+  // 최초 마운트에만 localStorage 복원 (SSR 하이드레이션 불일치 방지).
   useEffect(() => {
-    setState(loadInitial());
-    hydrated.current = true;
-  }, []);
+    setState(loadInitial(userId));
+  }, [userId]);
 
   useEffect(() => {
-    if (!hydrated.current) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    // 복원(첫 setState) 전의 빈 상태 저장을 건너뛰어 저장된 탭을 지우지 않는다.
+    if (firstSave.current) {
+      firstSave.current = false;
+      return;
+    }
+    window.localStorage.setItem(storageKeyFor(userId), JSON.stringify(state));
+  }, [state, userId]);
 
   const openTab = useCallback((kind: TabKind, itemId: string, title: string, seed?: unknown) => {
     const id = tabId(kind, itemId);

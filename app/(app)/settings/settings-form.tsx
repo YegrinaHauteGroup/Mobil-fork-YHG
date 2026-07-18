@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { updateProfile, type SettingsState } from "./actions";
 
 export function SettingsForm({
@@ -24,10 +25,17 @@ export function SettingsForm({
   initialAddressPublic: boolean;
   initialPhonePublic: boolean;
 }) {
+  const router = useRouter();
   const [state, formAction, pending] = useActionState<SettingsState, FormData>(
     updateProfile,
     null
   );
+
+  // 저장 성공 시 서버 컴포넌트(헤더의 이름/아바타, 동료 목록 등)를 새로고침해
+  // 변경 사항이 즉시 반영되게 한다.
+  useEffect(() => {
+    if (state && "ok" in state) router.refresh();
+  }, [state, router]);
 
   return (
     <form action={formAction}>

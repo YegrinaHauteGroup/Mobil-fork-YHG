@@ -3,6 +3,7 @@
 import "./code-editor.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useWorkspace } from "../../workspace/workspace-context";
 import dynamic from "next/dynamic";
 import { LANGUAGES, isLangKey, detectLanguage, type LangKey } from "@/lib/languages";
 import { ShareDialog } from "@/components/share-dialog";
@@ -50,6 +51,7 @@ export function CodeEditor({
   myShareId: string;
 }) {
   const router = useRouter();
+  const { renameTab } = useWorkspace();
   const [name, setName] = useState(initialName);
   const [language, setLanguage] = useState<LangKey>(
     isLangKey(initialLanguage) ? initialLanguage : "plaintext"
@@ -108,6 +110,7 @@ export function CodeEditor({
 
   const onName = (v: string) => {
     setName(v);
+    renameTab("code", fileId, v.trim() || "untitled.txt");
     // 언어가 미지정(plaintext)일 때만 확장자로 자동 추정
     if (langRef.current === "plaintext") {
       const detected = detectLanguage(v);

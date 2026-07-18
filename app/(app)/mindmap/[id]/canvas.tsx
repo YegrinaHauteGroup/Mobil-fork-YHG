@@ -171,7 +171,7 @@ function Inner({
   items: WorkspaceItem[];
 }) {
   const router = useRouter();
-  const { openTab } = useWorkspace();
+  const { openTab, renameTab } = useWorkspace();
   const { fitView } = useReactFlow();
   const initial = useMemo(() => parseGraph(initialData), [initialData]);
   const [nodes, setNodes, onNodesChange] = useNodesState(initial.nodes);
@@ -353,7 +353,10 @@ function Inner({
           <input
             className="mm-title"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              renameTab("mindmap", mapId, e.target.value.trim() || "Untitled map");
+            }}
             placeholder="Untitled map"
             disabled={!canEdit}
           />

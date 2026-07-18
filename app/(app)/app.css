@@ -341,6 +341,16 @@
   color: var(--text-1);
   text-transform: uppercase;
 }
+/* 프로필 사진을 원형으로 꽉 채워 표시(비율 유지, 넘침 잘라냄). */
+.avatar-img {
+  object-fit: cover;
+  padding: 0;
+}
+
+/* 계정 영역은 항상 헤더 우측에 정렬한다. */
+.acct {
+  margin-left: auto;
+}
 
 /* ---- body: rail + main ---- */
 .app-body {
@@ -467,6 +477,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* .panel 자체에는 패딩이 없어(내용을 .panel-body 로 감싸는 게 기본) 카드에
+     직접 내용을 넣는 이 컴포넌트는 글씨가 가장자리에 붙었다 — 다른 페이지의
+     panel-body 와 같은 여백을 준다. */
+  padding: 16px 18px;
 }
 .coworker-fields {
   display: flex;
