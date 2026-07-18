@@ -10,11 +10,11 @@ import { HeaderSearch } from "./header-search";
 export function AppHeader({
   displayName,
   email,
-  role,
+  avatarUrl,
 }: {
   displayName: string;
   email: string;
-  role: "user" | "admin";
+  avatarUrl: string | null;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -55,9 +55,13 @@ export function AppHeader({
 
       <div className="acct" ref={ref}>
         <button className="acct-btn" onClick={() => setOpen((v) => !v)}>
-          <span className="avatar">{initial}</span>
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="avatar avatar-img" src={avatarUrl} alt={name} width={28} height={28} />
+          ) : (
+            <span className="avatar">{initial}</span>
+          )}
           <span className="acct-name">{name}</span>
-          {role === "admin" && <span className="badge badge-admin">admin</span>}
         </button>
         {open && (
           <div className="acct-menu">

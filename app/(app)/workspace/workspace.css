@@ -14,7 +14,11 @@
   background: var(--bg-1);
   border-bottom: 1px solid var(--border-0);
   gap: 2px;
+  /* 탭 줄은 좌우 스크롤만 허용한다. overflow-x 만 auto 로 두면 CSS 명세상
+     나머지 축(visible)이 auto 로 승격되어 세로 스크롤까지 생기므로, overflow-y
+     를 hidden 으로 명시해 위아래 스크롤을 막는다. */
   overflow-x: auto;
+  overflow-y: hidden;
 }
 .wk-tabs {
   display: flex;
@@ -23,6 +27,7 @@
   flex: 1;
   min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: thin;
 }
 .wk-tab {

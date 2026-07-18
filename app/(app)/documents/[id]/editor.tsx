@@ -30,6 +30,7 @@ import {
   type DocExportFormat,
 } from "../actions";
 import { downloadBase64File } from "@/lib/download-file";
+import { useWorkspace } from "../../workspace/workspace-context";
 
 type SaveState = "saved" | "dirty" | "saving";
 const AUTOSAVE_MS = 1200;
@@ -83,6 +84,7 @@ export function DocumentEditor({
   myShareId: string;
 }) {
   const router = useRouter();
+  const { renameTab } = useWorkspace();
   const supabase = createClient();
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -186,6 +188,8 @@ export function DocumentEditor({
 
   const onTitle = (v: string) => {
     setTitle(v);
+    // 제목을 바꾸면 열린 탭 이름도 즉시 갱신한다.
+    renameTab("document", docId, v.trim() || "Untitled");
     if (canEdit) markDirty();
   };
 

@@ -6,6 +6,7 @@ import "@fortune-sheet/react/dist/index.css";
 import "./spreadsheet.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useWorkspace } from "../../workspace/workspace-context";
 import { Workbook } from "@fortune-sheet/react";
 import type { Sheet } from "@fortune-sheet/core";
 import type { Json } from "@/lib/database.types";
@@ -52,6 +53,7 @@ export function Spreadsheet({
   myShareId: string;
 }) {
   const router = useRouter();
+  const { renameTab } = useWorkspace();
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [pub, setPub] = useState(isPublic);
@@ -127,6 +129,7 @@ export function Spreadsheet({
 
   const onTitle = (v: string) => {
     setTitle(v);
+    renameTab("sheet", sheetId, v.trim() || "Untitled sheet");
     if (canEdit) markDirty();
   };
 
