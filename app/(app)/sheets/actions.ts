@@ -79,6 +79,10 @@ export async function deleteSheet(id: string): Promise<ActionResult> {
   const supabase = await createClient();
   const { error } = await supabase.from("sheets").delete().eq("id", id);
   if (error) return { ok: false, error: "Delete failed." };
+  await supabase.rpc("cleanup_object_links", { p_kind: "sheet", p_id: id }).then(
+    () => {},
+    () => {}
+  );
   revalidatePath("/sheets");
   return { ok: true };
 }

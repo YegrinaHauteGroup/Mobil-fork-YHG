@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { IconSettings, IconSignOut } from "./icons";
 import { useWorkspace } from "./workspace/workspace-context";
+import { HeaderSearch } from "./header-search";
 
 export function AppHeader({
   displayName,
@@ -38,6 +39,8 @@ export function AppHeader({
       <Link href="/dashboard" className="brand-logo" onClick={hide}>
         Mobil
       </Link>
+
+      <HeaderSearch />
 
       <div className="acct" ref={ref}>
         <button className="acct-btn" onClick={() => setOpen((v) => !v)}>
