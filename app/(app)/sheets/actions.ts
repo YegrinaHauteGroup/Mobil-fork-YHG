@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
+import { extractTagsFromText } from "@/lib/tags";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -67,11 +68,21 @@ export async function saveSheet(
   data: Json
 ): Promise<ActionResult> {
   const supabase = await createClient();
+  const finalTitle = title.trim() || "Untitled sheet";
   const { error } = await supabase
     .from("sheets")
-    .update({ title: title.trim() || "Untitled sheet", data })
+    .update({ title: finalTitle, data })
     .eq("id", id);
   if (error) return { ok: false, error: "Save failed." };
+
+  after(async () => {
+    const tags = extractTagsFromText(finalTitle);
+    await supabase.rpc("sync_object_tags", { p_kind: "sheet", p_id: id, p_tag_names: tags }).then(
+      () => {},
+      () => {}
+    );
+  });
+
   revalidatePath(`/sheets/${id}`);
   return { ok: true };
 }
@@ -82,6 +93,10 @@ export async function deleteSheet(id: string): Promise<ActionResult> {
   if (error) return { ok: false, error: "Delete failed." };
   after(async () => {
     await supabase.rpc("cleanup_object_links", { p_kind: "sheet", p_id: id }).then(
+      () => {},
+      () => {}
+    );
+    await supabase.rpc("cleanup_object_tags", { p_kind: "sheet", p_id: id }).then(
       () => {},
       () => {}
     );

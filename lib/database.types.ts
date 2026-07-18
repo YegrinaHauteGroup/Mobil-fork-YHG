@@ -345,6 +345,22 @@ export interface Database {
           created_at: string;
         }[];
       };
+      sync_object_tags: {
+        Args: { p_kind: string; p_id: string; p_tag_names: string[] | null };
+        Returns: undefined;
+      };
+      cleanup_object_tags: {
+        Args: { p_kind: string; p_id: string };
+        Returns: undefined;
+      };
+      search_by_tag: {
+        Args: { p_tag: string };
+        Returns: { kind: string; id: string; title: string; updated_at: string | null }[];
+      };
+      get_object_tags_bulk: {
+        Args: { p_kind: string; p_ids: string[] };
+        Returns: { object_id: string; tag_name: string }[];
+      };
       list_coworkers: {
         Args: Record<string, never>;
         Returns: {

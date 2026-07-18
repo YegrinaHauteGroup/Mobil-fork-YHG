@@ -17,6 +17,21 @@ export async function searchOntology(query: string): Promise<SearchResult[]> {
   const q = query.trim();
   if (!q) return [];
   const supabase = await createClient();
+
+  // 검색창에 "#태그" 형태로 입력하면 태그 조회로 라우팅한다.
+  if (q.startsWith("#")) {
+    const { data, error } = await supabase.rpc("search_by_tag", { p_tag: q });
+    if (error || !data) return [];
+    return data.map((r) => ({
+      kind: r.kind,
+      id: r.id,
+      title: r.title ?? "",
+      snippet: "",
+      rank: 0,
+      updated_at: r.updated_at ?? "",
+    }));
+  }
+
   const { data, error } = await supabase.rpc("search_ontology", { p_query: q });
   if (error || !data) return [];
   return data;

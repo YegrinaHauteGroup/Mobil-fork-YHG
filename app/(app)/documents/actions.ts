@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
 import { extractDocLinks } from "@/lib/ontology-links";
+import { extractTagsFromText, extractTiptapPlainText } from "@/lib/tags";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -111,6 +112,13 @@ export async function saveDocument(
         () => {},
         () => {}
       );
+    const tags = extractTagsFromText(`${title} ${extractTiptapPlainText(content)}`);
+    await supabase
+      .rpc("sync_object_tags", { p_kind: "document", p_id: id, p_tag_names: tags })
+      .then(
+        () => {},
+        () => {}
+      );
   });
 
   revalidatePath(`/documents/${id}`);
@@ -123,6 +131,10 @@ export async function deleteDocument(id: string): Promise<ActionResult> {
   if (error) return { ok: false, error: "Delete failed." };
   after(async () => {
     await supabase.rpc("cleanup_object_links", { p_kind: "document", p_id: id }).then(
+      () => {},
+      () => {}
+    );
+    await supabase.rpc("cleanup_object_tags", { p_kind: "document", p_id: id }).then(
       () => {},
       () => {}
     );

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatBytes, formatDate } from "@/lib/format";
 import { getFileCategory, FILE_CATEGORY_LABEL, type FileCategory } from "@/lib/file-category";
+import { extractTagsFromText } from "@/lib/tags";
 import { ShareDialog } from "@/components/share-dialog";
 import {
   deleteFile,
@@ -119,6 +120,8 @@ export function FilesClient({
           target_id: fileId,
           action: "create",
         });
+        const tags = extractTagsFromText(file.name);
+        supabase.rpc("sync_object_tags", { p_kind: "file", p_id: fileId, p_tag_names: tags });
       }
       router.refresh();
     } catch (e) {
