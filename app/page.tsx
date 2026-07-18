@@ -1,12 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { isNextControlFlowError } from "@/lib/next-control-flow";
 
 export default async function LandingPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user: User | null = null;
+  try {
+    const supabase = await createClient();
+    ({
+      data: { user },
+    } = await supabase.auth.getUser());
+  } catch (error) {
+    if (isNextControlFlowError(error)) throw error;
+    // Supabase 설정/연결 오류로 인해 랜딩 페이지 전체가 500 이 되는 것을 방지한다.
+    console.error("[LandingPage] Supabase 세션 확인 실패:", error);
+  }
 
   if (user) {
     redirect("/dashboard");

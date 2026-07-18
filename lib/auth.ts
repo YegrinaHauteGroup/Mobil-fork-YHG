@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { isNextControlFlowError } from "@/lib/next-control-flow";
 import type { Database } from "@/lib/database.types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -14,10 +15,20 @@ export async function requireUser(): Promise<{
   email: string;
   profile: Profile;
 }> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let supabase;
+  let user;
+  try {
+    supabase = await createClient();
+    ({
+      data: { user },
+    } = await supabase.auth.getUser());
+  } catch (error) {
+    if (isNextControlFlowError(error)) throw error;
+    // Supabase 설정/연결 오류로 보호된 페이지 전체가 500 이 되는 대신
+    // 로그인 화면으로 안전하게 보낸다.
+    console.error("[requireUser] Supabase 세션 확인 실패:", error);
+    redirect("/login");
+  }
 
   if (!user) {
     redirect("/login");
