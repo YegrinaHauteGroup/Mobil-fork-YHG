@@ -423,6 +423,33 @@
   margin: 6px 0 0;
 }
 
+/* 파일 목록 확장자/타입 분류 탭 */
+.category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.category-tab {
+  padding: 5px 12px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-2);
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.category-tab:hover {
+  color: var(--text-0);
+  border-color: var(--border-1);
+}
+.category-tab.active {
+  color: var(--text-0);
+  background: var(--bg-4);
+  border-color: var(--border-2);
+}
+
 /* 통계 타일 */
 .stat-grid {
   display: grid;

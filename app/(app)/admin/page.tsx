@@ -5,6 +5,8 @@ import { requireUser } from "@/lib/auth";
 import { formatDate } from "@/lib/format";
 import { GenerateCode } from "./generate-code";
 import { MediaGc } from "./media-gc";
+import { PendingApprovals } from "./pending-approvals";
+import { listUsersByApproval } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +17,7 @@ export default async function AdminConsolePage() {
   }
 
   const supabase = await createClient();
-  const [usersRes, logsRes] = await Promise.all([
+  const [usersRes, logsRes, pendingRes] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, email, display_name, role, created_at")
@@ -26,10 +28,12 @@ export default async function AdminConsolePage() {
       .select("id, user_id, target_type, target_id, action, created_at")
       .order("created_at", { ascending: false })
       .limit(30),
+    listUsersByApproval("pending"),
   ]);
 
   const users = usersRes.data ?? [];
   const logs = logsRes.data ?? [];
+  const pendingUsers = Array.isArray(pendingRes) ? pendingRes : [];
 
   return (
     <>
@@ -44,6 +48,15 @@ export default async function AdminConsolePage() {
             <p className="page-sub">
               Issue admin codes; browse users and audit logs.
             </p>
+          </div>
+        </div>
+
+        <div className="panel" style={{ marginBottom: 24 }}>
+          <div className="panel-header">
+            <span className="label">PENDING APPROVALS ({pendingUsers.length})</span>
+          </div>
+          <div className="panel-body">
+            <PendingApprovals initialUsers={pendingUsers} />
           </div>
         </div>
 

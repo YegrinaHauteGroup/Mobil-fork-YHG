@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Noto_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -14,6 +14,15 @@ const notoSans = Noto_Sans({
 export const metadata: Metadata = {
   title: "Mobil",
   description: "A private idea vault for personal and security work — files, documents and code in one place",
+};
+
+// 편집기(문서/코드/시트) 사용 중 핀치·더블탭 확대가 걸려 타이핑을 방해하지
+// 않도록 PC/태블릿/모바일 전부에서 확대를 막는다.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

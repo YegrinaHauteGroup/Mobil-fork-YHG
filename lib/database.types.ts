@@ -14,6 +14,7 @@ export type Json =
   | Json[];
 
 export type Role = "user" | "admin";
+export type ApprovalStatus = "pending" | "approved" | "rejected";
 export type Permission = "view" | "edit";
 export type TargetType = "document" | "file" | "code";
 export type AuditAction =
@@ -32,6 +33,9 @@ export interface Database {
           email: string;
           display_name: string | null;
           role: Role;
+          approval_status: ApprovalStatus;
+          approved_by: string | null;
+          approved_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -40,6 +44,7 @@ export interface Database {
           email: string;
           display_name?: string | null;
           role?: Role;
+          approval_status?: ApprovalStatus;
         };
         Update: {
           email?: string;
@@ -302,6 +307,25 @@ export interface Database {
       redeem_admin_code: {
         Args: { p_code: string };
         Returns: undefined;
+      };
+      approve_user: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      reject_user: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      list_users_by_approval: {
+        Args: { p_status: string | null };
+        Returns: {
+          id: string;
+          email: string;
+          display_name: string | null;
+          role: Role;
+          approval_status: ApprovalStatus;
+          created_at: string;
+        }[];
       };
       generate_admin_code: {
         Args: { p_expires_at: string | null };
