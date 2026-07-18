@@ -1,0 +1,86 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { formatDate } from "@/lib/format";
+import { OpenItemButton } from "../workspace/open-item-button";
+
+type MapRow = {
+  id: string;
+  owner_id: string;
+  title: string;
+  is_public: boolean;
+  updated_at: string;
+};
+
+export function MindMapList({ maps, userId }: { maps: MapRow[]; userId: string }) {
+  const [query, setQuery] = useState("");
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return maps;
+    return maps.filter((m) => (m.title || "").toLowerCase().includes(q));
+  }, [maps, query]);
+
+  return (
+    <div className="panel">
+      <div className="panel-header">
+        <span className="label">
+          MAPS ({filtered.length}
+          {query ? ` / ${maps.length}` : ""})
+        </span>
+        <input
+          className="input"
+          style={{ width: 240, height: 30 }}
+          placeholder="Search title…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+      </div>
+      {maps.length === 0 ? (
+        <div className="empty">No maps yet. Use “New map” to start.</div>
+      ) : filtered.length === 0 ? (
+        <div className="empty">No maps match “{query}”.</div>
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th style={{ width: 90 }}>Visibility</th>
+              <th style={{ width: 60 }}>Owner</th>
+              <th style={{ width: 180 }}>Updated</th>
+              <th style={{ width: 80 }}></th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((m) => (
+              <tr key={m.id}>
+                <td>
+                  <OpenItemButton kind="mindmap" id={m.id} title={m.title || "Untitled map"} className="link-btn">
+                    {m.title || "Untitled map"}
+                  </OpenItemButton>
+                </td>
+                <td>
+                  {m.is_public ? (
+                    <span className="badge badge-ok">public</span>
+                  ) : (
+                    <span className="badge">private</span>
+                  )}
+                </td>
+                <td>
+                  <span className="badge">{m.owner_id === userId ? "Mine" : "Shared"}</span>
+                </td>
+                <td className="mono muted" style={{ fontSize: 12 }}>
+                  {formatDate(m.updated_at)}
+                </td>
+                <td>
+                  <OpenItemButton kind="mindmap" id={m.id} title={m.title || "Untitled map"} className="btn btn-ghost btn-sm">
+                    Open
+                  </OpenItemButton>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}

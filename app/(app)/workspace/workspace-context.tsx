@@ -1,0 +1,182 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+
+export type TabKind = "document" | "code" | "sheet" | "mindmap";
+export type Pane = "left" | "right";
+
+export type Tab = {
+  id: string; // `${kind}:${itemId}`
+  kind: TabKind;
+  itemId: string;
+  title: string;
+};
+
+type StoredState = {
+  tabs: Tab[];
+  paneLeft: string | null;
+  paneRight: string | null;
+  split: boolean;
+  splitPct: number;
+  open: boolean;
+};
+
+const STORAGE_KEY = "mobil.workspace.v1";
+const MIN_SPLIT = 20;
+const MAX_SPLIT = 80;
+
+function tabId(kind: TabKind, itemId: string) {
+  return `${kind}:${itemId}`;
+}
+
+function loadInitial(): StoredState {
+  if (typeof window === "undefined") {
+    return { tabs: [], paneLeft: null, paneRight: null, split: false, splitPct: 50, open: false };
+  }
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) throw new Error("empty");
+    const parsed = JSON.parse(raw) as StoredState;
+    if (!Array.isArray(parsed.tabs)) throw new Error("bad shape");
+    return parsed;
+  } catch {
+    return { tabs: [], paneLeft: null, paneRight: null, split: false, splitPct: 50, open: false };
+  }
+}
+
+type WorkspaceCtx = {
+  tabs: Tab[];
+  paneLeft: string | null;
+  paneRight: string | null;
+  split: boolean;
+  splitPct: number;
+  open: boolean;
+  openTab: (kind: TabKind, itemId: string, title: string) => void;
+  closeTab: (id: string) => void;
+  focusTab: (id: string, pane?: Pane) => void;
+  setPaneTab: (pane: Pane, id: string | null) => void;
+  toggleSplit: () => void;
+  setSplitPct: (pct: number) => void;
+  hide: () => void;
+  renameTab: (kind: TabKind, itemId: string, title: string) => void;
+};
+
+const Ctx = createContext<WorkspaceCtx | null>(null);
+
+export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
+  const [state, setState] = useState<StoredState>(() => ({
+    tabs: [],
+    paneLeft: null,
+    paneRight: null,
+    split: false,
+    splitPct: 50,
+    open: false,
+  }));
+  const hydrated = useRef(false);
+
+  // 최초 마운트에만 localStorage 복원 (SSR 하이드레이션 불일치 방지)
+  useEffect(() => {
+    setState(loadInitial());
+    hydrated.current = true;
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated.current) return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [state]);
+
+  const openTab = useCallback((kind: TabKind, itemId: string, title: string) => {
+    const id = tabId(kind, itemId);
+    setState((s) => {
+      const exists = s.tabs.some((t) => t.id === id);
+      const tabs = exists ? s.tabs : [...s.tabs, { id, kind, itemId, title }];
+      // 우측 패널이 포커스 상태가 아니면 좌측에 배치
+      const paneLeft = s.split && s.paneLeft && s.paneLeft !== id ? s.paneLeft : id;
+      const paneRight = s.split ? s.paneRight : null;
+      return { ...s, tabs, paneLeft: s.split ? s.paneLeft ?? id : id, paneRight, open: true };
+    });
+  }, []);
+
+  const closeTab = useCallback((id: string) => {
+    setState((s) => {
+      const tabs = s.tabs.filter((t) => t.id !== id);
+      const paneLeft = s.paneLeft === id ? tabs[0]?.id ?? null : s.paneLeft;
+      const paneRight = s.paneRight === id ? null : s.paneRight;
+      const open = tabs.length > 0 && s.open;
+      return { ...s, tabs, paneLeft, paneRight, open };
+    });
+  }, []);
+
+  const focusTab = useCallback((id: string, pane: Pane = "left") => {
+    setState((s) => ({
+      ...s,
+      open: true,
+      paneLeft: pane === "left" ? id : s.paneLeft,
+      paneRight: pane === "right" ? id : s.paneRight,
+    }));
+  }, []);
+
+  const setPaneTab = useCallback((pane: Pane, id: string | null) => {
+    setState((s) => ({
+      ...s,
+      [pane === "left" ? "paneLeft" : "paneRight"]: id,
+    }));
+  }, []);
+
+  const toggleSplit = useCallback(() => {
+    setState((s) => ({ ...s, split: !s.split, paneRight: !s.split ? s.paneRight : null }));
+  }, []);
+
+  const setSplitPct = useCallback((pct: number) => {
+    const clamped = Math.min(MAX_SPLIT, Math.max(MIN_SPLIT, pct));
+    setState((s) => ({ ...s, splitPct: clamped }));
+  }, []);
+
+  const hide = useCallback(() => {
+    setState((s) => ({ ...s, open: false }));
+  }, []);
+
+  const renameTab = useCallback((kind: TabKind, itemId: string, title: string) => {
+    const id = tabId(kind, itemId);
+    setState((s) => ({
+      ...s,
+      tabs: s.tabs.map((t) => (t.id === id ? { ...t, title } : t)),
+    }));
+  }, []);
+
+  const value = useMemo<WorkspaceCtx>(
+    () => ({
+      tabs: state.tabs,
+      paneLeft: state.paneLeft,
+      paneRight: state.paneRight,
+      split: state.split,
+      splitPct: state.splitPct,
+      open: state.open,
+      openTab,
+      closeTab,
+      focusTab,
+      setPaneTab,
+      toggleSplit,
+      setSplitPct,
+      hide,
+      renameTab,
+    }),
+    [state, openTab, closeTab, focusTab, setPaneTab, toggleSplit, setSplitPct, hide, renameTab]
+  );
+
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}
+
+export function useWorkspace() {
+  const ctx = useContext(Ctx);
+  if (!ctx) throw new Error("useWorkspace must be used within WorkspaceProvider");
+  return ctx;
+}

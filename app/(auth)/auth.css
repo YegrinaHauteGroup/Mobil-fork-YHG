@@ -1,0 +1,56 @@
+/* 인증 화면 공용 레이아웃 */
+.auth-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(
+      1000px 500px at 50% -20%,
+      rgba(199, 70, 52, 0.05),
+      transparent 60%
+    ),
+    var(--bg-0);
+}
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.auth-brand .brand-mark {
+  color: var(--accent);
+}
+.auth-brand .brand-name {
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--text-0);
+}
+.auth-panel {
+  background: var(--bg-2);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius-lg);
+  padding: 28px 26px;
+}
+.auth-h {
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--text-0);
+  margin: 0 0 4px;
+}
+.auth-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  margin: 0 0 22px;
+}
+.auth-foot {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--text-2);
+}

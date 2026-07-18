@@ -1,0 +1,113 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Modal } from "@/components/modal";
+
+const NAV: Record<string, string> = {
+  h: "/dashboard",
+  f: "/files",
+  d: "/documents",
+  s: "/sheets",
+  c: "/code",
+  m: "/mindmap",
+};
+
+const HELP: [string, string][] = [
+  ["g h", "Go to Dashboard"],
+  ["g f", "Go to Files"],
+  ["g d", "Go to Documents"],
+  ["g s", "Go to Sheets"],
+  ["g c", "Go to Code"],
+  ["g m", "Go to Mindmap"],
+  [",", "Go to Settings"],
+  ["⌘/Ctrl S", "Save (in editors)"],
+  ["?", "Toggle this help"],
+];
+
+function inEditable(el: EventTarget | null): boolean {
+  const n = el as HTMLElement | null;
+  if (!n) return false;
+  const tag = n.tagName;
+  return (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    n.isContentEditable === true
+  );
+}
+
+export function Shortcuts() {
+  const router = useRouter();
+  const [help, setHelp] = useState(false);
+  const gPending = useRef(false);
+  const gTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const onKey = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (inEditable(e.target)) return;
+
+      // ? → help
+      if (e.key === "?") {
+        e.preventDefault();
+        setHelp((v) => !v);
+        return;
+      }
+      if (e.key === "Escape") {
+        setHelp(false);
+        return;
+      }
+
+      // g-prefix navigation
+      if (gPending.current) {
+        const dest = NAV[e.key.toLowerCase()];
+        gPending.current = false;
+        if (gTimer.current) clearTimeout(gTimer.current);
+        if (dest) {
+          e.preventDefault();
+          router.push(dest);
+        }
+        return;
+      }
+      if (e.key.toLowerCase() === "g") {
+        gPending.current = true;
+        if (gTimer.current) clearTimeout(gTimer.current);
+        gTimer.current = setTimeout(() => (gPending.current = false), 1200);
+        return;
+      }
+
+      // , → Settings (common convention, e.g. Slack/Linear preferences)
+      if (e.key === ",") {
+        e.preventDefault();
+        router.push("/settings");
+      }
+    },
+    [router]
+  );
+
+  useEffect(() => {
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onKey]);
+
+  if (!help) return null;
+  return (
+    <Modal title="Keyboard shortcuts" onClose={() => setHelp(false)} width={420}>
+      <table className="table">
+        <tbody>
+          {HELP.map(([k, d]) => (
+            <tr key={k}>
+              <td style={{ width: 120 }}>
+                <span className="badge" style={{ minWidth: 0 }}>
+                  {k}
+                </span>
+              </td>
+              <td>{d}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </Modal>
+  );
+}
