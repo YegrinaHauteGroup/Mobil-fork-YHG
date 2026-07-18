@@ -1,27 +1,18 @@
 # Mobil
 
-개인 및 사적, 보안 업무를 위한 아이디어 저장소 SaaS. Google Drive + Docs 형태로
-**파일 저장**과 **문서 작성·편집**을 하나의 플랫폼에서 수행합니다. 관리자는 별도
-코드로 권한을 획득합니다.
+Schema Tool for Users. Orchestrate Intelligence.
 
 > Deployment Archive for Infrastructure
 
-## 기술 스택
+## Technical Stacks
 
-- **Next.js 15** (App Router) — Vercel 배포 대상
+- **Next.js 15** (App Router) — Vercel Deployment
 - **Supabase** — Postgres · Auth(email+password) · Storage
 - **@supabase/ssr** — 서버 컴포넌트/미들웨어 세션 처리
 - **Tiptap** — 문서 에디터 (콘텐츠는 JSON 으로 저장, HTML 직접 저장 배제로 XSS 방지)
 - **@fortune-sheet/react** — 스프레드시트 에디터 (Excel/Google Sheets 호환 UI, 수식·서식·다중 시트)
 - 전 테이블 **RLS(행 수준 보안)** 적용, 모든 PK 는 UUID v4
 
-디자인은 Oracle 계열 전문 DBMS 감성 + GitHub 다크 구조 + 2000년대 초 Gotham
-시스템의 투박함을 참고했습니다. 네온/글로우 없이 블랙·다크그레이 위주, 각진
-모서리를 사용합니다. 본문 폰트는 Noto Sans(라틴 자소는 `next/font` 로 self-host,
-한글은 시스템 폰트 폴백)를 가는~미디엄 굵기로 씁니다. 상단 고정 헤더(로고 좌측,
-계정/설정 메뉴 우측) + 아이콘 전용 얇은 사이드바 레일 구조이며, 생성/추가 계열
-버튼은 초록, 삭제는 빨강으로 구분합니다. `g h/f/d/s/c/m` 같은 키보드 단축키와
-`?` 도움말 모달을 지원합니다(자세한 목록은 앱 내 `?` 참고).
 
 보안·최적화: 전 라우트에 보안 헤더(CSP · X-Frame-Options · HSTS · nosniff 등)를
 `middleware.ts` 에서 경로별로 적용하고(상세는 `lib/security-headers.ts` 참고 —
