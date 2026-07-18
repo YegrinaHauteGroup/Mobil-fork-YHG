@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { IconSettings, IconSignOut } from "./icons";
+import { IconSettings, IconSignOut, IconMenu } from "./icons";
 import { useWorkspace } from "./workspace/workspace-context";
+import { useMobileNav } from "./mobile-nav-context";
 import { HeaderSearch } from "./header-search";
 
 export function AppHeader({
@@ -20,6 +21,7 @@ export function AppHeader({
   const name = displayName || email.split("@")[0];
   const initial = (name || "?").charAt(0).toUpperCase();
   const { hide } = useWorkspace();
+  const mobileNav = useMobileNav();
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -36,6 +38,15 @@ export function AppHeader({
 
   return (
     <header className="app-header">
+      <button
+        type="button"
+        className="hamburger-btn"
+        onClick={mobileNav.toggle}
+        aria-label={mobileNav.open ? "Close menu" : "Open menu"}
+        aria-expanded={mobileNav.open}
+      >
+        <IconMenu size={20} />
+      </button>
       <Link href="/dashboard" className="brand-logo" onClick={hide}>
         Mobil
       </Link>

@@ -77,8 +77,17 @@
   width: 100%;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-1);
-  overflow: hidden;
+  overflow: auto;
   background: #fff;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
   filter: invert(0.92) hue-rotate(180deg);
+}
+
+@media (max-width: 640px) {
+  .sh-bar {
+    padding: 8px 14px;
+  }
+  .sh-canvas {
+    padding: 8px;
+  }
 }

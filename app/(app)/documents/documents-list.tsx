@@ -46,6 +46,7 @@ export function DocumentsList({
       ) : filtered.length === 0 ? (
         <div className="empty">No documents match “{query}”.</div>
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
@@ -88,6 +89,7 @@ export function DocumentsList({
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

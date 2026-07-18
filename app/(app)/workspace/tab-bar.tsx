@@ -2,6 +2,7 @@
 
 import { IconDocuments, IconCode, IconSheet, IconMindmap } from "../icons";
 import { useWorkspace, type Tab } from "./workspace-context";
+import { useIsMobile } from "@/lib/use-media-query";
 
 const KIND_ICON = {
   document: IconDocuments,
@@ -42,6 +43,7 @@ function TabChip({ tab }: { tab: Tab }) {
 
 export function TabBar() {
   const { tabs, split, open, toggleSplit, hide } = useWorkspace();
+  const isMobile = useIsMobile();
 
   if (tabs.length === 0) return null;
 
@@ -53,14 +55,16 @@ export function TabBar() {
         ))}
       </div>
       <div className="wk-bar-actions">
-        <button
-          className={`wk-icon-btn ${split ? "on" : ""}`}
-          onClick={toggleSplit}
-          title="Toggle split view (max 2)"
-          aria-label="Toggle split view"
-        >
-          ⬓
-        </button>
+        {!isMobile && (
+          <button
+            className={`wk-icon-btn ${split ? "on" : ""}`}
+            onClick={toggleSplit}
+            title="Toggle split view (max 2)"
+            aria-label="Toggle split view"
+          >
+            ⬓
+          </button>
+        )}
         {open && (
           <button
             className="wk-icon-btn"

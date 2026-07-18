@@ -50,19 +50,20 @@ export function UserTable({ users }: { users: UserRow[] }) {
       ) : filtered.length === 0 ? (
         <div className="empty">No users match “{query}”.</div>
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
               <th>Email</th>
-              <th>Name</th>
+              <th className="col-hide-mobile">Name</th>
               <th style={{ width: 80 }}>Role</th>
-              <th style={{ width: 60 }}>Docs</th>
-              <th style={{ width: 60 }}>Files</th>
-              <th style={{ width: 60 }}>Code</th>
-              <th style={{ width: 60 }}>Sheets</th>
-              <th style={{ width: 60 }}>Maps</th>
+              <th style={{ width: 60 }} className="col-hide-mobile">Docs</th>
+              <th style={{ width: 60 }} className="col-hide-mobile">Files</th>
+              <th style={{ width: 60 }} className="col-hide-mobile">Code</th>
+              <th style={{ width: 60 }} className="col-hide-mobile">Sheets</th>
+              <th style={{ width: 60 }} className="col-hide-mobile">Maps</th>
               <th style={{ width: 100 }}>Storage</th>
-              <th style={{ width: 160 }}>Joined</th>
+              <th style={{ width: 160 }} className="col-hide-mobile">Joined</th>
             </tr>
           </thead>
           <tbody>
@@ -71,7 +72,7 @@ export function UserTable({ users }: { users: UserRow[] }) {
                 <td className="mono" style={{ fontSize: 12 }}>
                   {u.email}
                 </td>
-                <td>{u.display_name || "—"}</td>
+                <td className="col-hide-mobile">{u.display_name || "—"}</td>
                 <td>
                   {u.role === "admin" ? (
                     <span className="badge badge-admin">admin</span>
@@ -79,19 +80,20 @@ export function UserTable({ users }: { users: UserRow[] }) {
                     <span className="badge">user</span>
                   )}
                 </td>
-                <td className="mono muted">{u.documents_count}</td>
-                <td className="mono muted">{u.files_count}</td>
-                <td className="mono muted">{u.code_count}</td>
-                <td className="mono muted">{u.sheets_count}</td>
-                <td className="mono muted">{u.maps_count}</td>
+                <td className="mono muted col-hide-mobile">{u.documents_count}</td>
+                <td className="mono muted col-hide-mobile">{u.files_count}</td>
+                <td className="mono muted col-hide-mobile">{u.code_count}</td>
+                <td className="mono muted col-hide-mobile">{u.sheets_count}</td>
+                <td className="mono muted col-hide-mobile">{u.maps_count}</td>
                 <td className="mono muted">{formatBytes(u.storage_bytes)}</td>
-                <td className="mono muted" style={{ fontSize: 12 }}>
+                <td className="mono muted col-hide-mobile" style={{ fontSize: 12 }}>
                   {formatDate(u.created_at)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

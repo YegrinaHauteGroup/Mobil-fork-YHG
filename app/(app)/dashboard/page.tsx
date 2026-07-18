@@ -158,11 +158,12 @@ export default async function DashboardPage() {
               <Link href="/documents">Create your first document.</Link>
             </div>
           ) : (
+            <div className="table-scroll">
             <table className="table">
               <thead>
                 <tr>
                   <th>Title</th>
-                  <th style={{ width: 180 }}>Updated</th>
+                  <th style={{ width: 180 }} className="col-hide-mobile">Updated</th>
                   <th style={{ width: 90 }}></th>
                 </tr>
               </thead>
@@ -179,7 +180,7 @@ export default async function DashboardPage() {
                         {d.title || "Untitled"}
                       </OpenItemButton>
                     </td>
-                    <td className="mono muted">
+                    <td className="mono muted col-hide-mobile">
                       {new Date(d.updated_at).toLocaleString("en-US")}
                     </td>
                     <td>
@@ -196,6 +197,7 @@ export default async function DashboardPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>
