@@ -50,6 +50,21 @@ export async function requireUser(): Promise<{
         email: user.email ?? "",
         display_name: null,
         role: "user",
+        // 트리거 복제 지연으로 프로필 행이 아직 안 보이는 극히 짧은 순간의
+        // 임시 폴백이다 — 실제 승인 여부를 알 수 없으니 대기 화면으로
+        // 보내는 쪽(오탐)이 잘못 통과시키는 쪽보다 안전하다.
+        approval_status: "pending",
+        approved_by: null,
+        approved_at: null,
+        avatar_url: null,
+        age: null,
+        address: null,
+        gender: null,
+        bio: null,
+        phone: null,
+        age_public: false,
+        address_public: false,
+        phone_public: false,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       } as Profile),

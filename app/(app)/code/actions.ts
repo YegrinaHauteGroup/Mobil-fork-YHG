@@ -5,6 +5,7 @@ import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { detectLanguage, isLangKey } from "@/lib/languages";
+import { extractTagsFromText } from "@/lib/tags";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -86,22 +87,30 @@ export async function saveCodeFile(
   if (!user) return { ok: false, error: "Authentication required." };
 
   const lang = isLangKey(language) ? language : "plaintext";
+  const finalName = name.trim() || "untitled.txt";
 
   const { error } = await supabase
     .from("code_files")
-    .update({ name: name.trim() || "untitled.txt", language: lang, content })
+    .update({ name: finalName, language: lang, content })
     .eq("id", id);
 
   if (error) return { ok: false, error: "Save failed." };
 
-  after(() =>
-    supabase.from("audit_logs").insert({
+  after(async () => {
+    await supabase.from("audit_logs").insert({
       user_id: user.id,
       target_type: "code",
       target_id: id,
       action: "update",
-    })
-  );
+    });
+    const tags = extractTagsFromText(finalName);
+    await supabase
+      .rpc("sync_object_tags", { p_kind: "code", p_id: id, p_tag_names: tags })
+      .then(
+        () => {},
+        () => {}
+      );
+  });
 
   revalidatePath(`/code/${id}`);
   return { ok: true };
@@ -113,6 +122,10 @@ export async function deleteCodeFile(id: string): Promise<ActionResult> {
   if (error) return { ok: false, error: "Delete failed." };
   after(async () => {
     await supabase.rpc("cleanup_object_links", { p_kind: "code", p_id: id }).then(
+      () => {},
+      () => {}
+    );
+    await supabase.rpc("cleanup_object_tags", { p_kind: "code", p_id: id }).then(
       () => {},
       () => {}
     );

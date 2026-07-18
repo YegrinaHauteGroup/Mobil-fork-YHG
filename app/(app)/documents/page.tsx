@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { createDocumentTab } from "./actions";
+import { createDocumentTab, importDocument } from "./actions";
 import { DocumentsList } from "./documents-list";
 import { NewItemButton } from "../workspace/new-item-button";
+import { ImportItemButton } from "../workspace/import-item-button";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,15 @@ export default async function DocumentsPage() {
               Your own and shared documents. Content is stored as structured JSON.
             </p>
           </div>
-          <NewItemButton kind="document" label="New document" create={createDocumentTab} />
+          <div className="row" style={{ gap: 8 }}>
+            <ImportItemButton
+              kind="document"
+              label="Import file"
+              accept=".txt,.docx,.hwp,.hwpx"
+              importAction={importDocument}
+            />
+            <NewItemButton kind="document" label="New document" create={createDocumentTab} />
+          </div>
         </div>
 
         <DocumentsList docs={docs ?? []} userId={userId} />

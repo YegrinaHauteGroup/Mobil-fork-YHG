@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
 import { extractMindmapLinks } from "@/lib/ontology-links";
+import { extractTagsFromText, extractMindmapPlainText } from "@/lib/tags";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -71,9 +72,10 @@ export async function saveMindMap(
   data: Json
 ): Promise<ActionResult> {
   const supabase = await createClient();
+  const finalTitle = title.trim() || "Untitled map";
   const { error } = await supabase
     .from("mind_maps")
-    .update({ title: title.trim() || "Untitled map", data })
+    .update({ title: finalTitle, data })
     .eq("id", id);
   if (error) return { ok: false, error: "Save failed." };
 
@@ -92,6 +94,13 @@ export async function saveMindMap(
         () => {},
         () => {}
       );
+    const tags = extractTagsFromText(`${finalTitle} ${extractMindmapPlainText(data)}`);
+    await supabase
+      .rpc("sync_object_tags", { p_kind: "mindmap", p_id: id, p_tag_names: tags })
+      .then(
+        () => {},
+        () => {}
+      );
   });
 
   revalidatePath(`/mindmap/${id}`);
@@ -104,6 +113,10 @@ export async function deleteMindMap(id: string): Promise<ActionResult> {
   if (error) return { ok: false, error: "Delete failed." };
   after(async () => {
     await supabase.rpc("cleanup_object_links", { p_kind: "mindmap", p_id: id }).then(
+      () => {},
+      () => {}
+    );
+    await supabase.rpc("cleanup_object_tags", { p_kind: "mindmap", p_id: id }).then(
       () => {},
       () => {}
     );

@@ -2,6 +2,44 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { ApprovalStatus, Role } from "@/lib/database.types";
+
+export type PendingUserRow = {
+  id: string;
+  email: string;
+  display_name: string | null;
+  role: Role;
+  approval_status: ApprovalStatus;
+  created_at: string;
+};
+
+/** 승인 대기(기본값)/승인됨/거절됨 사용자 목록 (관리자 전용, RPC 내부에서 재검증). */
+export async function listUsersByApproval(
+  status: ApprovalStatus | null = "pending"
+): Promise<PendingUserRow[] | { error: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("list_users_by_approval", {
+    p_status: status,
+  });
+  if (error) return { error: "Failed to load users. Check admin privileges." };
+  return data ?? [];
+}
+
+export async function approveUser(userId: string): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("approve_user", { p_user_id: userId });
+  if (error) return { error: "Failed to approve user." };
+  revalidatePath("/admin");
+  return { ok: true };
+}
+
+export async function rejectUser(userId: string): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("reject_user", { p_user_id: userId });
+  if (error) return { error: "Failed to reject user." };
+  revalidatePath("/admin");
+  return { ok: true };
+}
 
 export async function generateAdminCode(
   expiresAt: string | null

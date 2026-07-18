@@ -6,8 +6,110 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import type { Json } from "@/lib/database.types";
 import { extractDocLinks } from "@/lib/ontology-links";
+import { extractTagsFromText, extractTiptapPlainText } from "@/lib/tags";
+import {
+  importFileToTiptapDoc,
+  tiptapToPlainText,
+  tiptapToDocxBuffer,
+  tiptapToPdfBytes,
+  tiptapToHwpxBytes,
+} from "@/lib/doc-convert";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
+
+const MAX_IMPORT_BYTES = 20 * 1024 * 1024; // 20MB
+
+/** 외부 텍스트 파일(txt/docx/hwp/hwpx)을 읽어 새 문서로 만든다. */
+export async function importDocument(
+  formData: FormData
+): Promise<{ id: string; title: string } | { error: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Authentication required." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "No file provided." };
+  if (file.size > MAX_IMPORT_BYTES) return { error: "File is too large (max 20MB)." };
+
+  let imported;
+  try {
+    const bytes = Buffer.from(await file.arrayBuffer());
+    imported = await importFileToTiptapDoc(file.name, bytes);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Could not read this file." };
+  }
+
+  const { data, error } = await supabase
+    .from("documents")
+    .insert({ owner_id: user.id, title: imported.title, content: imported.content })
+    .select("id, title")
+    .single();
+
+  if (error || !data) return { error: "Failed to create document." };
+
+  after(async () => {
+    await supabase.from("audit_logs").insert({
+      user_id: user.id,
+      target_type: "document",
+      target_id: data.id,
+      action: "create",
+    });
+    const tags = extractTagsFromText(`${data.title} ${extractTiptapPlainText(imported.content)}`);
+    await supabase
+      .rpc("sync_object_tags", { p_kind: "document", p_id: data.id, p_tag_names: tags })
+      .then(
+        () => {},
+        () => {}
+      );
+  });
+
+  revalidatePath("/documents");
+  return { id: data.id, title: data.title };
+}
+
+export type DocExportFormat = "txt" | "docx" | "pdf" | "hwpx";
+
+const EXPORT_MIME: Record<DocExportFormat, string> = {
+  txt: "text/plain",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  pdf: "application/pdf",
+  hwpx: "application/haansofthwpx",
+};
+
+/** 문서를 txt/docx/pdf/hwpx 로 내보낸다. base64 로 반환해 클라이언트에서 다운로드시킨다. */
+export async function exportDocument(
+  id: string,
+  format: DocExportFormat
+): Promise<{ fileName: string; mimeType: string; base64: string } | { error: string }> {
+  const supabase = await createClient();
+  const { data: doc, error } = await supabase
+    .from("documents")
+    .select("title, content")
+    .eq("id", id)
+    .single();
+  if (error || !doc) return { error: "Document not found." };
+
+  const title = doc.title || "Untitled";
+  const safeName = title.replace(/[^\w.\-() ]+/g, "_") || "document";
+
+  try {
+    let bytes: Buffer | Uint8Array;
+    if (format === "txt") bytes = Buffer.from(tiptapToPlainText(doc.content), "utf-8");
+    else if (format === "docx") bytes = await tiptapToDocxBuffer(doc.content, title);
+    else if (format === "pdf") bytes = await tiptapToPdfBytes(doc.content, title);
+    else bytes = await tiptapToHwpxBytes(doc.content, title);
+
+    return {
+      fileName: `${safeName}.${format}`,
+      mimeType: EXPORT_MIME[format],
+      base64: Buffer.from(bytes).toString("base64"),
+    };
+  } catch {
+    return { error: "Export failed." };
+  }
+}
 
 /** 탭 시스템용: 리다이렉트 없이 새 문서를 만들고 id/title 만 반환. */
 export async function createDocumentTab(): Promise<{ id: string; title: string }> {
@@ -111,6 +213,13 @@ export async function saveDocument(
         () => {},
         () => {}
       );
+    const tags = extractTagsFromText(`${title} ${extractTiptapPlainText(content)}`);
+    await supabase
+      .rpc("sync_object_tags", { p_kind: "document", p_id: id, p_tag_names: tags })
+      .then(
+        () => {},
+        () => {}
+      );
   });
 
   revalidatePath(`/documents/${id}`);
@@ -123,6 +232,10 @@ export async function deleteDocument(id: string): Promise<ActionResult> {
   if (error) return { ok: false, error: "Delete failed." };
   after(async () => {
     await supabase.rpc("cleanup_object_links", { p_kind: "document", p_id: id }).then(
+      () => {},
+      () => {}
+    );
+    await supabase.rpc("cleanup_object_tags", { p_kind: "document", p_id: id }).then(
       () => {},
       () => {}
     );

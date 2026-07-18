@@ -4,6 +4,8 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { formatBytes, formatDate } from "@/lib/format";
+import { getFileCategory, FILE_CATEGORY_LABEL, type FileCategory } from "@/lib/file-category";
+import { extractTagsFromText } from "@/lib/tags";
 import { ShareDialog } from "@/components/share-dialog";
 import {
   deleteFile,
@@ -41,21 +43,40 @@ export function FilesClient({
   const [error, setError] = useState<string | null>(null);
   const [shareTarget, setShareTarget] = useState<FileRow | null>(null);
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<FileCategory | "all">("all");
   const [dragOver, setDragOver] = useState(false);
   const dragDepth = useRef(0);
   const [pending, start] = useTransition();
 
   const onPick = () => inputRef.current?.click();
 
+  const categorized = useMemo(
+    () =>
+      initialFiles.map((f) => ({
+        file: f,
+        category: getFileCategory(f.file_name, f.mime_type),
+      })),
+    [initialFiles]
+  );
+
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<FileCategory, number>();
+    for (const { category: c } of categorized) counts.set(c, (counts.get(c) ?? 0) + 1);
+    return counts;
+  }, [categorized]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return initialFiles;
-    return initialFiles.filter(
-      (f) =>
-        f.file_name.toLowerCase().includes(q) ||
-        (f.mime_type ?? "").toLowerCase().includes(q)
-    );
-  }, [initialFiles, query]);
+    return categorized
+      .filter(({ category: c }) => category === "all" || c === category)
+      .filter(
+        ({ file: f }) =>
+          !q ||
+          f.file_name.toLowerCase().includes(q) ||
+          (f.mime_type ?? "").toLowerCase().includes(q)
+      )
+      .map(({ file }) => file);
+  }, [categorized, query, category]);
 
   const uploadFiles = async (fileList: FileList | File[] | null) => {
     const files = fileList ? Array.from(fileList) : [];
@@ -99,6 +120,8 @@ export function FilesClient({
           target_id: fileId,
           action: "create",
         });
+        const tags = extractTagsFromText(file.name);
+        supabase.rpc("sync_object_tags", { p_kind: "file", p_id: fileId, p_tag_names: tags });
       }
       router.refresh();
     } catch (e) {
@@ -192,11 +215,33 @@ export function FilesClient({
 
       {error && <div className="notice notice-error">{error}</div>}
 
+      <div className="category-tabs">
+        <button
+          type="button"
+          className={`category-tab ${category === "all" ? "active" : ""}`}
+          onClick={() => setCategory("all")}
+        >
+          All ({initialFiles.length})
+        </button>
+        {(Object.keys(FILE_CATEGORY_LABEL) as FileCategory[])
+          .filter((c) => (categoryCounts.get(c) ?? 0) > 0)
+          .map((c) => (
+            <button
+              type="button"
+              key={c}
+              className={`category-tab ${category === c ? "active" : ""}`}
+              onClick={() => setCategory(c)}
+            >
+              {FILE_CATEGORY_LABEL[c]} ({categoryCounts.get(c)})
+            </button>
+          ))}
+      </div>
+
       <div className="panel">
         <div className="panel-header">
           <span className="label">
             FILES ({filtered.length}
-            {query ? ` / ${initialFiles.length}` : ""})
+            {query || category !== "all" ? ` / ${initialFiles.length}` : ""})
           </span>
           <input
             className="input"
@@ -211,7 +256,9 @@ export function FilesClient({
             No files yet. Use “Upload” or drag & drop to get started.
           </div>
         ) : filtered.length === 0 ? (
-          <div className="empty">No files match “{query}”.</div>
+          <div className="empty">
+            No files match{query ? ` “${query}”` : ` this filter`}.
+          </div>
         ) : (
           <div className="table-scroll">
           <table className="table">

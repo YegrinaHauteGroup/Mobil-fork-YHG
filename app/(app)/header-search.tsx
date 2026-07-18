@@ -175,7 +175,7 @@ export function HeaderSearch() {
       <input
         className="hsearch-input"
         type="text"
-        placeholder="Search Mobil…"
+        placeholder="Search Mobil… (try #tag)"
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);

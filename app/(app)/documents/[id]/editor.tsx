@@ -26,7 +26,10 @@ import {
   shareDocument,
   revokeDocumentShare,
   listDocumentShares,
+  exportDocument,
+  type DocExportFormat,
 } from "../actions";
+import { downloadBase64File } from "@/lib/download-file";
 
 type SaveState = "saved" | "dirty" | "saving";
 const AUTOSAVE_MS = 1200;
@@ -87,7 +90,19 @@ export function DocumentEditor({
   const [showShare, setShowShare] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadingMedia, setUploadingMedia] = useState(false);
+  const [showExport, setShowExport] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const onExport = async (format: DocExportFormat) => {
+    setShowExport(false);
+    setExporting(true);
+    setError(null);
+    const res = await exportDocument(docId, format);
+    if ("error" in res) setError(res.error);
+    else downloadBase64File(res.fileName, res.mimeType, res.base64);
+    setExporting(false);
+  };
 
   const editor = useEditor({
     editable: canEdit,
@@ -259,6 +274,23 @@ export function DocumentEditor({
               </button>
             </>
           )}
+          <div style={{ position: "relative" }}>
+            <button
+              className="btn btn-sm"
+              onClick={() => setShowExport((v) => !v)}
+              disabled={exporting}
+            >
+              {exporting ? "Exporting…" : "Export"}
+            </button>
+            {showExport && (
+              <div className="acct-menu" style={{ top: 32, minWidth: 140 }}>
+                <button className="acct-item" onClick={() => onExport("txt")}>Plain text (.txt)</button>
+                <button className="acct-item" onClick={() => onExport("docx")}>Word (.docx)</button>
+                <button className="acct-item" onClick={() => onExport("pdf")}>PDF (.pdf)</button>
+                <button className="acct-item" onClick={() => onExport("hwpx")}>한글 (.hwpx)</button>
+              </div>
+            )}
+          </div>
           {canEdit && (
             <button
               className="btn btn-primary btn-sm"

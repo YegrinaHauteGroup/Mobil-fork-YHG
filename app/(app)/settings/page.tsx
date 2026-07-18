@@ -1,11 +1,14 @@
 import { requireUser } from "@/lib/auth";
 import { Copyable } from "@/components/copyable";
 import { SettingsForm } from "./settings-form";
+import { AvatarUpload } from "./avatar-upload";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
   const { userId, email, profile } = await requireUser();
+  const name = profile.display_name || email.split("@")[0];
+  const initial = (name || "?").charAt(0).toUpperCase();
 
   return (
     <>
@@ -26,7 +29,18 @@ export default async function SettingsPage() {
             <span className="label">PROFILE</span>
           </div>
           <div className="panel-body">
-            <SettingsForm initialName={profile.display_name ?? ""} />
+            <AvatarUpload userId={userId} initialUrl={profile.avatar_url} initial={initial} />
+            <SettingsForm
+              initialName={profile.display_name ?? ""}
+              initialGender={profile.gender ?? ""}
+              initialBio={profile.bio ?? ""}
+              initialAge={profile.age}
+              initialAddress={profile.address ?? ""}
+              initialPhone={profile.phone ?? ""}
+              initialAgePublic={profile.age_public}
+              initialAddressPublic={profile.address_public}
+              initialPhonePublic={profile.phone_public}
+            />
           </div>
         </div>
 

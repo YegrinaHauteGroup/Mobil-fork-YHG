@@ -14,6 +14,7 @@ export type Json =
   | Json[];
 
 export type Role = "user" | "admin";
+export type ApprovalStatus = "pending" | "approved" | "rejected";
 export type Permission = "view" | "edit";
 export type TargetType = "document" | "file" | "code";
 export type AuditAction =
@@ -32,6 +33,18 @@ export interface Database {
           email: string;
           display_name: string | null;
           role: Role;
+          approval_status: ApprovalStatus;
+          approved_by: string | null;
+          approved_at: string | null;
+          avatar_url: string | null;
+          age: number | null;
+          address: string | null;
+          gender: string | null;
+          bio: string | null;
+          phone: string | null;
+          age_public: boolean;
+          address_public: boolean;
+          phone_public: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -40,10 +53,20 @@ export interface Database {
           email: string;
           display_name?: string | null;
           role?: Role;
+          approval_status?: ApprovalStatus;
         };
         Update: {
           email?: string;
           display_name?: string | null;
+          avatar_url?: string | null;
+          age?: number | null;
+          address?: string | null;
+          gender?: string | null;
+          bio?: string | null;
+          phone?: string | null;
+          age_public?: boolean;
+          address_public?: boolean;
+          phone_public?: boolean;
         };
         Relationships: [];
       };
@@ -302,6 +325,56 @@ export interface Database {
       redeem_admin_code: {
         Args: { p_code: string };
         Returns: undefined;
+      };
+      approve_user: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      reject_user: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      list_users_by_approval: {
+        Args: { p_status: string | null };
+        Returns: {
+          id: string;
+          email: string;
+          display_name: string | null;
+          role: Role;
+          approval_status: ApprovalStatus;
+          created_at: string;
+        }[];
+      };
+      sync_object_tags: {
+        Args: { p_kind: string; p_id: string; p_tag_names: string[] | null };
+        Returns: undefined;
+      };
+      cleanup_object_tags: {
+        Args: { p_kind: string; p_id: string };
+        Returns: undefined;
+      };
+      search_by_tag: {
+        Args: { p_tag: string };
+        Returns: { kind: string; id: string; title: string; updated_at: string | null }[];
+      };
+      get_object_tags_bulk: {
+        Args: { p_kind: string; p_ids: string[] };
+        Returns: { object_id: string; tag_name: string }[];
+      };
+      list_coworkers: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          display_name: string | null;
+          email: string;
+          role: Role;
+          gender: string | null;
+          bio: string | null;
+          avatar_url: string | null;
+          age: number | null;
+          address: string | null;
+          phone: string | null;
+        }[];
       };
       generate_admin_code: {
         Args: { p_expires_at: string | null };

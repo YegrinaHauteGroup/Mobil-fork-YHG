@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { extractTagsFromText } from "@/lib/tags";
 
 const BUCKET = "files";
 
@@ -61,6 +62,15 @@ export async function renameFile(
     .eq("id", fileId);
 
   if (error) return { ok: false, error: "Rename failed." };
+
+  after(async () => {
+    const tags = extractTagsFromText(name);
+    await supabase.rpc("sync_object_tags", { p_kind: "file", p_id: fileId, p_tag_names: tags }).then(
+      () => {},
+      () => {}
+    );
+  });
+
   revalidatePath("/files");
   return { ok: true };
 }
@@ -98,6 +108,10 @@ export async function deleteFile(fileId: string): Promise<ActionResult> {
 
   after(async () => {
     await supabase.rpc("cleanup_object_links", { p_kind: "file", p_id: fileId }).then(
+      () => {},
+      () => {}
+    );
+    await supabase.rpc("cleanup_object_tags", { p_kind: "file", p_id: fileId }).then(
       () => {},
       () => {}
     );
