@@ -52,6 +52,19 @@ export async function generateAdminCode(
   return { code: data as string };
 }
 
+/** 사용자 계정 삭제(관리자 전용). auth.users 삭제가 profiles 및 소유 콘텐츠까지 연쇄 삭제한다. */
+export async function deleteUser(userId: string): Promise<{ ok: true } | { error: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("admin_delete_user", { p_user_id: userId });
+  if (error) {
+    if (error.message.includes("cannot_delete_self")) {
+      return { error: "You cannot delete your own account." };
+    }
+    return { error: "Failed to delete user." };
+  }
+  return { ok: true };
+}
+
 export type OrphanedMediaRow = { name: string; bytes: number; created_at: string };
 
 /** 어떤 문서에도 참조되지 않는 media 버킷 오브젝트를 찾는다(관리자 전용). */

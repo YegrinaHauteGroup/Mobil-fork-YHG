@@ -58,6 +58,44 @@ export async function updateProfile(
   return { ok: true };
 }
 
+export type PasswordState = { error: string } | { ok: true } | null;
+
+/** 비밀번호 변경: 기존 비밀번호로 재인증에 성공해야만 새 비밀번호로 교체한다. */
+export async function changePassword(
+  _prev: PasswordState,
+  formData: FormData
+): Promise<PasswordState> {
+  const currentPassword = String(formData.get("current_password") || "");
+  const newPassword = String(formData.get("new_password") || "");
+  const newPasswordConfirm = String(formData.get("new_password_confirm") || "");
+
+  if (!currentPassword || !newPassword) {
+    return { error: "Enter your current and new password." };
+  }
+  if (newPassword.length < 8) {
+    return { error: "New password must be at least 8 characters." };
+  }
+  if (newPassword !== newPasswordConfirm) {
+    return { error: "New passwords do not match." };
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) return { error: "Authentication required." };
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+  if (signInError) return { error: "Current password is incorrect." };
+
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) return { error: "Failed to change password." };
+  return { ok: true };
+}
+
 export async function setAvatarUrl(
   url: string
 ): Promise<{ ok: true } | { error: string }> {

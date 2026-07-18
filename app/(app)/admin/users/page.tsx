@@ -8,7 +8,7 @@ import { UserTable } from "./user-table";
 export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
-  const { profile } = await requireUser();
+  const { userId, profile } = await requireUser();
   if (profile.role !== "admin") {
     redirect("/admin/redeem");
   }
@@ -58,7 +58,7 @@ export default async function AdminUsersPage() {
           </div>
         </div>
 
-        <UserTable users={users} />
+        <UserTable users={users} currentUserId={userId} />
       </div>
     </>
   );

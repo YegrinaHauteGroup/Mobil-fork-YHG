@@ -2,6 +2,7 @@ import { requireUser } from "@/lib/auth";
 import { Copyable } from "@/components/copyable";
 import { SettingsForm } from "./settings-form";
 import { AvatarUpload } from "./avatar-upload";
+import { PasswordForm } from "./password-form";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +66,15 @@ export default async function SettingsPage() {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+
+        <div className="panel" style={{ marginBottom: 24 }}>
+          <div className="panel-header">
+            <span className="label">SECURITY</span>
+          </div>
+          <div className="panel-body">
+            <PasswordForm />
           </div>
         </div>
 

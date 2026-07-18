@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { signup, type SignupState } from "./actions";
 
 export function SignupForm() {
@@ -8,6 +8,9 @@ export function SignupForm() {
     signup,
     null
   );
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const mismatch = passwordConfirm.length > 0 && password !== passwordConfirm;
 
   if (state && "ok" in state && state.needsConfirmation) {
     return (
@@ -63,12 +66,36 @@ export function SignupForm() {
           placeholder="At least 8 characters"
           minLength={8}
           required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
+      </div>
+      <div className="field">
+        <label className="label" htmlFor="password_confirm">
+          Confirm password
+        </label>
+        <input
+          id="password_confirm"
+          name="password_confirm"
+          type="password"
+          className="input"
+          autoComplete="new-password"
+          placeholder="Re-enter password"
+          minLength={8}
+          required
+          value={passwordConfirm}
+          onChange={(e) => setPasswordConfirm(e.target.value)}
+        />
+        {mismatch && (
+          <span style={{ fontSize: 12.5, color: "var(--accent, #e7a79d)" }}>
+            Passwords do not match.
+          </span>
+        )}
       </div>
       <button
         type="submit"
         className="btn btn-primary btn-block"
-        disabled={pending}
+        disabled={pending || mismatch}
       >
         {pending ? "Creating…" : "Create account"}
       </button>
