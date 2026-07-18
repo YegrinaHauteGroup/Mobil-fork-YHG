@@ -62,6 +62,16 @@ export function IconMindmap({ size }: P) {
     </svg>
   );
 }
+export function IconCoworkers({ size }: P) {
+  return (
+    <svg {...base(size)}>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+      <circle cx="17" cy="7" r="2.4" />
+      <path d="M15.5 14.2c2.4.5 4.1 2.6 4.5 5.3" />
+    </svg>
+  );
+}
 export function IconKey({ size }: P) {
   return (
     <svg {...base(size)}>

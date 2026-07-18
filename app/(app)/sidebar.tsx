@@ -9,6 +9,7 @@ import {
   IconCode,
   IconSheet,
   IconMindmap,
+  IconCoworkers,
   IconKey,
   IconConsole,
 } from "./icons";
@@ -24,6 +25,7 @@ const MAIN: Item[] = [
   { href: "/sheets", label: "Sheets", icon: <IconSheet /> },
   { href: "/code", label: "Code", icon: <IconCode /> },
   { href: "/mindmap", label: "Mindmap", icon: <IconMindmap /> },
+  { href: "/coworkers", label: "Co-workers", icon: <IconCoworkers /> },
 ];
 
 export function Sidebar({ role }: { role: "user" | "admin" }) {

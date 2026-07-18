@@ -36,6 +36,15 @@ export interface Database {
           approval_status: ApprovalStatus;
           approved_by: string | null;
           approved_at: string | null;
+          avatar_url: string | null;
+          age: number | null;
+          address: string | null;
+          gender: string | null;
+          bio: string | null;
+          phone: string | null;
+          age_public: boolean;
+          address_public: boolean;
+          phone_public: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -49,6 +58,15 @@ export interface Database {
         Update: {
           email?: string;
           display_name?: string | null;
+          avatar_url?: string | null;
+          age?: number | null;
+          address?: string | null;
+          gender?: string | null;
+          bio?: string | null;
+          phone?: string | null;
+          age_public?: boolean;
+          address_public?: boolean;
+          phone_public?: boolean;
         };
         Relationships: [];
       };
@@ -325,6 +343,21 @@ export interface Database {
           role: Role;
           approval_status: ApprovalStatus;
           created_at: string;
+        }[];
+      };
+      list_coworkers: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          display_name: string | null;
+          email: string;
+          role: Role;
+          gender: string | null;
+          bio: string | null;
+          avatar_url: string | null;
+          age: number | null;
+          address: string | null;
+          phone: string | null;
         }[];
       };
       generate_admin_code: {
