@@ -45,6 +45,7 @@ export async function createCodeFileTab(): Promise<{
       name: data.name,
       language: data.language,
       content: data.content,
+      initialYjsState: null,
       isPublic: false,
       canEdit: true,
       isOwner: true,
@@ -60,7 +61,7 @@ export async function getCodeFileForTab(id: string) {
 
   const { data: file } = await supabase
     .from("code_files")
-    .select("id, owner_id, name, language, content, is_public, updated_at")
+    .select("id, owner_id, name, language, content, is_public, updated_at, yjs_state")
     .eq("id", id)
     .single();
 
@@ -82,6 +83,7 @@ export async function getCodeFileForTab(id: string) {
     name: file.name,
     language: file.language,
     content: file.content,
+    initialYjsState: file.yjs_state,
     isPublic: file.is_public,
     canEdit,
     isOwner: file.owner_id === userId,
@@ -89,12 +91,13 @@ export async function getCodeFileForTab(id: string) {
   };
 }
 
-/** 이름/언어/콘텐츠 저장. */
+/** 이름/언어/콘텐츠 저장. yjsState 는 실시간 동시편집용 Yjs 스냅샷(base64). */
 export async function saveCodeFile(
   id: string,
   name: string,
   language: string,
-  content: string
+  content: string,
+  yjsState?: string | null
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -107,7 +110,12 @@ export async function saveCodeFile(
 
   const { error } = await supabase
     .from("code_files")
-    .update({ name: finalName, language: lang, content })
+    .update({
+      name: finalName,
+      language: lang,
+      content,
+      ...(yjsState !== undefined ? { yjs_state: yjsState } : {}),
+    })
     .eq("id", id);
 
   if (error) return { ok: false, error: "Save failed." };

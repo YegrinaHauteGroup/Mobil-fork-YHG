@@ -13,6 +13,8 @@ import {
 } from "@codemirror/language";
 import { closeBrackets, closeBracketsKeymap } from "@codemirror/autocomplete";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
+import { yCollab, yUndoManagerKeymap } from "y-codemirror.next";
+import type * as Y from "yjs";
 import type { LangKey } from "@/lib/languages";
 import { languageExtension } from "./languages";
 import { mobilTheme } from "./theme";
@@ -27,11 +29,15 @@ export function CodeMirror({
   language,
   editable,
   onChange,
+  ytext,
 }: {
   value: string;
   language: LangKey;
   editable: boolean;
   onChange: (value: string) => void;
+  /** 실시간 동시편집용 Yjs 공유 텍스트. 주어지면 CodeMirror 자체 history 대신
+   * Yjs 의 undo manager 로 동작하고, value 는 최초 마운트에만 참고된다. */
+  ytext?: Y.Text;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
@@ -51,7 +57,10 @@ export function CodeMirror({
       lineNumbers(),
       highlightActiveLineGutter(),
       foldGutter(),
-      history(),
+      // Yjs 로 동기화되는 문서는 CodeMirror 기본 history 대신 Yjs 의 undo
+      // manager 를 쓴다(yCollab 이 자체적으로 붙인다) — 둘을 같이 켜면
+      // undo 스택이 꼬인다.
+      ytext ? [] : history(),
       drawSelection(),
       rectangularSelection(),
       crosshairCursor(),
@@ -65,7 +74,7 @@ export function CodeMirror({
         ...closeBracketsKeymap,
         ...defaultKeymap,
         ...searchKeymap,
-        ...historyKeymap,
+        ...(ytext ? yUndoManagerKeymap : historyKeymap),
         ...foldKeymap,
         indentWithTab,
       ]),
@@ -76,6 +85,7 @@ export function CodeMirror({
         EditorView.editable.of(editable),
         EditorState.readOnly.of(!editable),
       ]),
+      ytext ? yCollab(ytext, null) : [],
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           onChangeRef.current(update.state.doc.toString());
@@ -84,7 +94,10 @@ export function CodeMirror({
     ];
 
     const view = new EditorView({
-      state: EditorState.create({ doc: value, extensions: baseExtensions }),
+      state: EditorState.create({
+        doc: ytext ? ytext.toString() : value,
+        extensions: baseExtensions,
+      }),
       parent: hostRef.current,
     });
     viewRef.current = view;

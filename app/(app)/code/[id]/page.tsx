@@ -17,7 +17,7 @@ export default async function CodeFilePage({
 
   const { data: file } = await supabase
     .from("code_files")
-    .select("id, owner_id, name, language, content, is_public, updated_at")
+    .select("id, owner_id, name, language, content, is_public, updated_at, yjs_state")
     .eq("id", id)
     .single();
 
@@ -54,6 +54,7 @@ export default async function CodeFilePage({
         initialName={file.name}
         initialLanguage={file.language}
         initialContent={file.content}
+        initialYjsState={file.yjs_state}
         canEdit={canEdit}
         isOwner={isOwner}
         isPublic={file.is_public}

@@ -79,6 +79,7 @@ export interface Database {
           is_public: boolean;
           created_at: string;
           updated_at: string;
+          yjs_state: string | null;
         };
         Insert: {
           id?: string;
@@ -86,11 +87,13 @@ export interface Database {
           title?: string;
           content?: Json;
           is_public?: boolean;
+          yjs_state?: string | null;
         };
         Update: {
           title?: string;
           content?: Json;
           is_public?: boolean;
+          yjs_state?: string | null;
         };
         Relationships: [];
       };
@@ -124,6 +127,7 @@ export interface Database {
           is_public: boolean;
           created_at: string;
           updated_at: string;
+          yjs_state: string | null;
         };
         Insert: {
           id?: string;
@@ -132,12 +136,14 @@ export interface Database {
           language?: string;
           content?: string;
           is_public?: boolean;
+          yjs_state?: string | null;
         };
         Update: {
           name?: string;
           language?: string;
           content?: string;
           is_public?: boolean;
+          yjs_state?: string | null;
         };
         Relationships: [];
       };

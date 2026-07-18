@@ -3,11 +3,13 @@
 import "./code-editor.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import * as Y from "yjs";
 import { useWorkspace } from "../../workspace/workspace-context";
 import { ContributorBadges } from "../../contributors/contributor-badges";
 import dynamic from "next/dynamic";
 import { LANGUAGES, isLangKey, detectLanguage, type LangKey } from "@/lib/languages";
 import { ShareDialog } from "@/components/share-dialog";
+import { connectYjsBroadcast, encodeYUpdate, decodeYUpdate } from "@/lib/yjs-transport";
 import {
   saveCodeFile,
   deleteCodeFile,
@@ -37,6 +39,7 @@ export function CodeEditor({
   initialName,
   initialLanguage,
   initialContent,
+  initialYjsState,
   canEdit,
   isOwner,
   isPublic,
@@ -46,6 +49,7 @@ export function CodeEditor({
   initialName: string;
   initialLanguage: string;
   initialContent: string;
+  initialYjsState: string | null;
   canEdit: boolean;
   isOwner: boolean;
   isPublic: boolean;
@@ -67,6 +71,27 @@ export function CodeEditor({
   const langRef = useRef(language);
   const contentRef = useRef(initialContent);
 
+  // Yjs 문서: 실시간 동시편집 상태. 스냅샷이 있으면 복원하고, 없으면(레거시
+  // 파일 최초 오픈) 빈 채로 시작해 CodeMirror 쪽에서 initialContent 로 채운다.
+  const ydocRef = useRef<Y.Doc | null>(null);
+  if (!ydocRef.current) {
+    const doc = new Y.Doc();
+    if (initialYjsState) {
+      try {
+        Y.applyUpdate(doc, decodeYUpdate(initialYjsState));
+      } catch {
+        // 손상된 스냅샷은 무시 — 아래에서 ytext 가 비어 있으면 initialContent 로 채운다.
+      }
+    }
+    const text = doc.getText("content");
+    if (text.length === 0 && initialContent) {
+      text.insert(0, initialContent);
+    }
+    ydocRef.current = doc;
+  }
+  const ydoc = ydocRef.current;
+  const ytext = ydoc.getText("content");
+
   useEffect(() => {
     nameRef.current = name;
   }, [name]);
@@ -79,20 +104,27 @@ export function CodeEditor({
     };
   }, []);
 
+  // Supabase Realtime Broadcast 로 다른 접속자와 Yjs 업데이트를 주고받는다.
+  useEffect(() => {
+    return connectYjsBroadcast(ydoc, `code:${fileId}`);
+  }, [ydoc, fileId]);
+
   const persist = useCallback(async () => {
     setSaveState("saving");
+    const yjsState = encodeYUpdate(Y.encodeStateAsUpdate(ydoc));
     const res = await saveCodeFile(
       fileId,
       nameRef.current,
       langRef.current,
-      contentRef.current
+      contentRef.current,
+      yjsState
     );
     if (res.ok) setSaveState("saved");
     else {
       setSaveState("dirty");
       setError(res.error);
     }
-  }, [fileId]);
+  }, [fileId, ydoc]);
 
   const markDirty = useCallback(() => {
     if (!canEdit) return;
@@ -266,6 +298,7 @@ export function CodeEditor({
           language={language}
           editable={canEdit}
           onChange={onContentChange}
+          ytext={ytext}
         />
       </div>
 
