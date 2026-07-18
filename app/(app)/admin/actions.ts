@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { ApprovalStatus, Role } from "@/lib/database.types";
 
@@ -29,7 +28,6 @@ export async function approveUser(userId: string): Promise<{ ok: true } | { erro
   const supabase = await createClient();
   const { error } = await supabase.rpc("approve_user", { p_user_id: userId });
   if (error) return { error: "Failed to approve user." };
-  revalidatePath("/admin");
   return { ok: true };
 }
 
@@ -37,7 +35,6 @@ export async function rejectUser(userId: string): Promise<{ ok: true } | { error
   const supabase = await createClient();
   const { error } = await supabase.rpc("reject_user", { p_user_id: userId });
   if (error) return { error: "Failed to reject user." };
-  revalidatePath("/admin");
   return { ok: true };
 }
 
@@ -75,6 +72,5 @@ export async function deleteOrphanedMedia(
   const supabase = await createClient();
   const { data, error } = await supabase.storage.from("media").remove(names);
   if (error) return { error: "Failed to delete media objects." };
-  revalidatePath("/admin");
   return { removed: data?.length ?? 0 };
 }

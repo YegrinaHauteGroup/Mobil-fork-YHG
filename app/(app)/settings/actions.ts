@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
 export type SettingsState = { error: string } | { ok: true } | null;
@@ -56,7 +55,6 @@ export async function updateProfile(
     .eq("id", user.id);
 
   if (error) return { error: "Failed to save." };
-  revalidatePath("/", "layout");
   return { ok: true };
 }
 
@@ -75,6 +73,5 @@ export async function setAvatarUrl(
     .eq("id", user.id);
 
   if (error) return { error: "Failed to save avatar." };
-  revalidatePath("/", "layout");
   return { ok: true };
 }

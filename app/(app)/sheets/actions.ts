@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
@@ -20,7 +19,7 @@ const MAX_IMPORT_BYTES = 20 * 1024 * 1024; // 20MB
 /** 외부 csv/xlsx 파일을 읽어 새 시트로 만든다. */
 export async function importSheet(
   formData: FormData
-): Promise<{ id: string; title: string } | { error: string }> {
+): Promise<{ id: string; title: string; seed: unknown } | { error: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -42,7 +41,7 @@ export async function importSheet(
   const { data, error } = await supabase
     .from("sheets")
     .insert({ owner_id: user.id, title: imported.title, data: imported.data })
-    .select("id, title")
+    .select("id, title, data")
     .single();
 
   if (error || !data) return { error: "Failed to create sheet." };
@@ -55,8 +54,19 @@ export async function importSheet(
     );
   });
 
-  revalidatePath("/sheets");
-  return { id: data.id, title: data.title };
+  return {
+    id: data.id,
+    title: data.title,
+    seed: {
+      id: data.id,
+      title: data.title,
+      data: data.data,
+      isPublic: false,
+      canEdit: true,
+      isOwner: true,
+      myShareId: user.id,
+    },
+  };
 }
 
 export type SheetExportFormat = "csv" | "xlsx" | "pdf";
@@ -99,7 +109,11 @@ export async function exportSheet(
 }
 
 /** 탭 시스템용: 리다이렉트 없이 새 시트를 만들고 id/title 만 반환. */
-export async function createSheetTab(): Promise<{ id: string; title: string }> {
+export async function createSheetTab(): Promise<{
+  id: string;
+  title: string;
+  seed: unknown;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -109,11 +123,23 @@ export async function createSheetTab(): Promise<{ id: string; title: string }> {
   const { data, error } = await supabase
     .from("sheets")
     .insert({ owner_id: user.id, title: "Untitled sheet" })
-    .select("id, title")
+    .select("id, title, data")
     .single();
 
   if (error || !data) throw new Error("Failed to create sheet.");
-  return { id: data.id, title: data.title };
+  return {
+    id: data.id,
+    title: data.title,
+    seed: {
+      id: data.id,
+      title: data.title,
+      data: data.data,
+      isPublic: false,
+      canEdit: true,
+      isOwner: true,
+      myShareId: user.id,
+    },
+  };
 }
 
 /** 탭 시스템용: 시트 데이터 + 편집 가능 여부를 한 번에 조회. */
@@ -172,7 +198,6 @@ export async function saveSheet(
     );
   });
 
-  revalidatePath(`/sheets/${id}`);
   return { ok: true };
 }
 
@@ -190,7 +215,6 @@ export async function deleteSheet(id: string): Promise<ActionResult> {
       () => {}
     );
   });
-  revalidatePath("/sheets");
   return { ok: true };
 }
 
@@ -204,7 +228,6 @@ export async function setSheetPublic(
     .update({ is_public: isPublic })
     .eq("id", id);
   if (error) return { ok: false, error: "Update failed." };
-  revalidatePath(`/sheets/${id}`);
   return { ok: true };
 }
 
@@ -232,7 +255,6 @@ export async function shareSheet(
       ok: false,
       error: "Failed to grant access. Check that the Share ID belongs to an existing user.",
     };
-  revalidatePath(`/sheets/${sheetId}`);
   return { ok: true };
 }
 

@@ -10,7 +10,7 @@ export function NewItemButton({
 }: {
   kind: TabKind;
   label: string;
-  create: () => Promise<{ id: string; title: string }>;
+  create: () => Promise<{ id: string; title: string; seed: unknown }>;
 }) {
   const { openTab } = useWorkspace();
   const [pending, setPending] = useState(false);
@@ -21,8 +21,8 @@ export function NewItemButton({
     setPending(true);
     setError(null);
     try {
-      const { id, title } = await create();
-      openTab(kind, id, title);
+      const { id, title, seed } = await create();
+      openTab(kind, id, title, seed);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to create — please try again.");
     } finally {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { TabKind } from "./workspace-context";
+import { tabId, useWorkspace, type TabKind } from "./workspace-context";
 import { getDocumentForTab } from "../documents/actions";
 import { getCodeFileForTab } from "../code/actions";
 import { getSheetForTab } from "../sheets/actions";
@@ -12,6 +12,7 @@ import { SpreadsheetLoader } from "../sheets/[id]/spreadsheet-loader";
 import { MindMapCanvasLoader } from "../mindmap/[id]/canvas-loader";
 
 export function TabContent({ kind, itemId }: { kind: TabKind; itemId: string }) {
+  const { consumeSeed } = useWorkspace();
   const [state, setState] = useState<
     | { status: "loading" }
     | { status: "error"; message: string }
@@ -21,6 +22,17 @@ export function TabContent({ kind, itemId }: { kind: TabKind; itemId: string }) 
 
   useEffect(() => {
     let cancelled = false;
+
+    // 방금 만든 항목이면(NewItemButton 이 openTab 에 시드를 실어 보냄) 이미
+    // 전체 데이터를 알고 있으므로 서버 재조회를 건너뛴다 — auth 확인 + 본문
+    // 조회 + 권한 조회로 이어지는 왕복을 없앤다. 목록/검색에서 연 기존 탭이나
+    // 새로고침 후 복원된 탭에는 시드가 없어 평소대로 조회한다.
+    const seed = consumeSeed(tabId(kind, itemId));
+    if (seed !== undefined) {
+      setState({ status: "ready", data: seed });
+      return;
+    }
+
     setState({ status: "loading" });
 
     const load = async () => {
@@ -49,7 +61,7 @@ export function TabContent({ kind, itemId }: { kind: TabKind; itemId: string }) 
     return () => {
       cancelled = true;
     };
-  }, [kind, itemId]);
+  }, [kind, itemId, consumeSeed]);
 
   if (state.status === "loading") {
     return <div className="wk-loading">Loading…</div>;

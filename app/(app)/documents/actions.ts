@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
@@ -22,7 +21,7 @@ const MAX_IMPORT_BYTES = 20 * 1024 * 1024; // 20MB
 /** 외부 텍스트 파일(txt/docx/hwp/hwpx)을 읽어 새 문서로 만든다. */
 export async function importDocument(
   formData: FormData
-): Promise<{ id: string; title: string } | { error: string }> {
+): Promise<{ id: string; title: string; seed: unknown } | { error: string }> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -44,7 +43,7 @@ export async function importDocument(
   const { data, error } = await supabase
     .from("documents")
     .insert({ owner_id: user.id, title: imported.title, content: imported.content })
-    .select("id, title")
+    .select("id, title, content")
     .single();
 
   if (error || !data) return { error: "Failed to create document." };
@@ -65,8 +64,19 @@ export async function importDocument(
       );
   });
 
-  revalidatePath("/documents");
-  return { id: data.id, title: data.title };
+  return {
+    id: data.id,
+    title: data.title,
+    seed: {
+      id: data.id,
+      title: data.title,
+      content: data.content,
+      isPublic: false,
+      canEdit: true,
+      isOwner: true,
+      myShareId: user.id,
+    },
+  };
 }
 
 export type DocExportFormat = "txt" | "docx" | "pdf" | "hwpx";
@@ -112,7 +122,11 @@ export async function exportDocument(
 }
 
 /** 탭 시스템용: 리다이렉트 없이 새 문서를 만들고 id/title 만 반환. */
-export async function createDocumentTab(): Promise<{ id: string; title: string }> {
+export async function createDocumentTab(): Promise<{
+  id: string;
+  title: string;
+  seed: unknown;
+}> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -122,7 +136,7 @@ export async function createDocumentTab(): Promise<{ id: string; title: string }
   const { data, error } = await supabase
     .from("documents")
     .insert({ owner_id: user.id, title: "Untitled" })
-    .select("id, title")
+    .select("id, title, content")
     .single();
 
   if (error || !data) throw new Error("Failed to create document.");
@@ -137,7 +151,21 @@ export async function createDocumentTab(): Promise<{ id: string; title: string }
     })
   );
 
-  return { id: data.id, title: data.title };
+  return {
+    id: data.id,
+    title: data.title,
+    // 이미 알고 있는 데이터라 TabContent 가 getDocumentForTab 을 또 호출하지
+    // 않도록 그대로 시드로 넘긴다(getDocumentForTab 과 동일한 모양).
+    seed: {
+      id: data.id,
+      title: data.title,
+      content: data.content,
+      isPublic: false,
+      canEdit: true,
+      isOwner: true,
+      myShareId: user.id,
+    },
+  };
 }
 
 /** 탭 시스템용: 문서 데이터 + 편집 가능 여부를 한 번에 조회. */
@@ -222,7 +250,6 @@ export async function saveDocument(
       );
   });
 
-  revalidatePath(`/documents/${id}`);
   return { ok: true };
 }
 
@@ -240,7 +267,6 @@ export async function deleteDocument(id: string): Promise<ActionResult> {
       () => {}
     );
   });
-  revalidatePath("/documents");
   return { ok: true };
 }
 
@@ -255,7 +281,6 @@ export async function setDocumentPublic(
     .update({ is_public: isPublic })
     .eq("id", id);
   if (error) return { ok: false, error: "Update failed." };
-  revalidatePath(`/documents/${id}`);
   return { ok: true };
 }
 
@@ -298,7 +323,6 @@ export async function shareDocument(
     };
   }
 
-  revalidatePath(`/documents/${documentId}`);
   return { ok: true };
 }
 

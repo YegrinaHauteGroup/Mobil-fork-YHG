@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { extractTagsFromText } from "@/lib/tags";
@@ -71,7 +70,6 @@ export async function renameFile(
     );
   });
 
-  revalidatePath("/files");
   return { ok: true };
 }
 
@@ -125,7 +123,6 @@ export async function deleteFile(fileId: string): Promise<ActionResult> {
     }
   });
 
-  revalidatePath("/files");
   return { ok: true };
 }
 
@@ -169,7 +166,6 @@ export async function shareFile(
     };
   }
 
-  revalidatePath("/files");
   return { ok: true };
 }
 
@@ -184,7 +180,6 @@ export async function revokeFileShare(
     .eq("id", permissionId);
 
   if (error) return { ok: false, error: "Failed to revoke." };
-  revalidatePath("/files");
   return { ok: true };
 }
 
