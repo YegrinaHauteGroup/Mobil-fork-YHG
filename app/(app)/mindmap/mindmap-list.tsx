@@ -40,6 +40,7 @@ export function MindMapList({ maps, userId }: { maps: MapRow[]; userId: string }
       ) : filtered.length === 0 ? (
         <div className="empty">No maps match “{query}”.</div>
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
@@ -80,6 +81,7 @@ export function MindMapList({ maps, userId }: { maps: MapRow[]; userId: string }
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

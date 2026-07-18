@@ -260,3 +260,22 @@
   border-radius: var(--radius);
   outline: none;
 }
+
+@media (max-width: 640px) {
+  .mm-bar {
+    padding: 8px 14px;
+  }
+  .mm-picker {
+    max-width: none;
+    flex: 1;
+  }
+  /* 좁은 화면에서는 고정폭 대신 캔버스 대부분을 덮는 바텀시트에 가깝게 */
+  .mm-preview {
+    top: auto;
+    height: 60%;
+    width: auto;
+    left: 10px;
+    right: 10px;
+    max-width: none;
+  }
+}

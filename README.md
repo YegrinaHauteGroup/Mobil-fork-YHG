@@ -26,7 +26,36 @@ more info in www.officialyegrina.com
 허용), Tiptap·CodeMirror·React Flow·스프레드시트 에디터는 모두 지연 로딩
 (`ssr:false` 동적 임포트)으로 초기 번들에서 분리합니다.
 
-## Mobil 주요 기능
+### 반응형(태블릿·모바일)
+
+최근 8년 내 실기기의 CSS 뷰포트 폭을 기준으로 세 구간을 둡니다 — 모바일
+~360-430px(Galaxy S21-S24, iPhone SE-16 Pro Max), 태블릿 641-1024px(iPad
+mini/Air/Pro 11", Galaxy Tab, iPad Pro 12.9" 세로), 데스크톱 1025px~.
+가로모드 휴대폰(예: 844px)은 세로 태블릿과 여유 폭이 비슷해 "기기 종류"가
+아닌 "가용 폭" 기준으로 나눕니다.
+
+- **태블릿**: 데스크톱과 동일한 아이콘 사이드바·스플릿뷰 구조를 유지합니다.
+  대부분의 그리드가 이미 `auto-fit`/`auto-fill` 이라 자연스럽게 재배열되고,
+  콘텐츠 폭·여백만 축소됩니다.
+- **모바일(≤640px)**: 헤더는 유지하고 아이콘 사이드바는 햄버거 버튼으로
+  여닫는 슬라이드인 드로어(아이콘+라벨)로 전환됩니다. 스플릿뷰는 제공하지
+  않습니다 — localStorage 에 데스크톱에서 저장된 분할 상태가 남아 있어도
+  모바일 폭에서는 항상 단일 패널로 강제 렌더링합니다(`lib/use-media-query.ts`
+  의 `useIsMobile()`). 8개 목록/관리자 테이블은 전부 가로 스크롤
+  안전장치(`.table-scroll`)를 두고, 사용 빈도가 높은 파일·관리자 사용자
+  테이블은 저우선순위 컬럼(`Type`/`Owner`/개별 콘텐츠 개수 등)을 숨겨
+  핵심 정보 위주로 보여줍니다. 문서/코드 에디터 툴바, 마인드맵·시트 상단
+  바는 모두 줄바꿈되어 좁은 화면에서도 버튼이 잘리지 않습니다.
+- **터치 입력**: 이미지 리사이즈 핸들과 스플릿뷰 구분선 드래그는 Pointer
+  Events 로 구현되어 마우스와 터치(휴대폰·태블릿)를 동일하게 처리하며,
+  `(pointer: coarse)` 미디어 쿼리로 터치 기기에서만 작은 아이콘 버튼의
+  히트 영역을 넓힙니다(Apple HIG/Material 권장 터치 타깃 크기에 근접).
+
+알려진 제한: `@fortune-sheet/react`(스프레드시트) 내부 툴바·그리드는 3rd
+party 위젯이라 자체 터치 최적화 여부를 보장할 수 없어 `.sh-paper` 에
+`overflow: auto` 안전장치만 두었습니다.
+
+## 기능
 
 | 영역 | 내용 |
 | --- | --- |
@@ -133,6 +162,7 @@ app/
     dashboard/       개요 · 스토리지 사용량 그래프 · 최근 문서
     search/          온톨로지 통합 검색 서버 액션
     header-search.tsx 헤더 검색창 + 결과/연결 항목 드롭다운
+    mobile-nav-context.tsx 모바일 사이드바 드로어 열림 상태
     settings/        프로필 · 계정 설정
     admin/           코드 등록 · 관리자 콘솔 · 전체 사용자 관리(users/)
   auth/              콜백 · 로그아웃 라우트
@@ -140,6 +170,7 @@ components/codemirror/ 코드 에디터 래퍼 · 테마 · 언어 매핑
 lib/supabase/        browser · server · middleware 클라이언트
 lib/security-headers.ts 경로별 CSP/보안 헤더 구성
 lib/ontology-links.ts 마인드맵/문서 콘텐츠에서 온톨로지 링크 추출
+lib/use-media-query.ts SSR 안전 반응형 훅(useIsMobile 등)
 components/          공용 UI (모달 · 공유 다이얼로그 · 복사 필드)
 supabase/migrations/ DB 마이그레이션
 docs/                구축 지시서

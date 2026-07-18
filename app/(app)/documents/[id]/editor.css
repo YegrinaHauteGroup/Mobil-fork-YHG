@@ -233,9 +233,23 @@
   border: 2px solid var(--bg-0);
   cursor: nwse-resize;
   display: none;
+  touch-action: none;
 }
 .doc-media-wrap.selected .doc-media-handle {
   display: block;
+}
+/* 터치 기기 — 손가락으로 정확히 잡기엔 12px 는 너무 작다. 시각적 크기는
+   유지하고 히트 영역만 :after 로 넓힌다. */
+@media (pointer: coarse) {
+  .doc-media-handle {
+    width: 16px;
+    height: 16px;
+  }
+  .doc-media-handle::after {
+    content: "";
+    position: absolute;
+    inset: -12px;
+  }
 }
 /* task list (checkbox) */
 .ProseMirror ul[data-type="taskList"] {
@@ -355,4 +369,24 @@
   right: 6px;
   height: 3px;
   border-radius: 2px;
+}
+
+@media (max-width: 640px) {
+  .editor-bar {
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    row-gap: 8px;
+  }
+  .editor-title {
+    font-size: 15px;
+  }
+  .toolbar {
+    padding: 6px 14px;
+  }
+  .editor-scroll {
+    padding: 20px 14px 60px;
+  }
+  .slash-menu {
+    width: min(240px, calc(100vw - 32px));
+  }
 }

@@ -71,6 +71,7 @@ export function MediaGc() {
         <div className="empty">No orphaned media found.</div>
       )}
       {scan.status === "done" && scan.rows.length > 0 && (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
@@ -93,6 +94,7 @@ export function MediaGc() {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

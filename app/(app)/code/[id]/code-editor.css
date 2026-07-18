@@ -77,3 +77,17 @@
 .cm-host .cm-editor.cm-focused {
   outline: none;
 }
+
+@media (max-width: 640px) {
+  .code-bar {
+    flex-wrap: wrap;
+    padding: 8px 14px;
+    row-gap: 8px;
+  }
+  .code-bar-left {
+    flex-basis: 100%;
+  }
+  .code-name {
+    max-width: none;
+  }
+}

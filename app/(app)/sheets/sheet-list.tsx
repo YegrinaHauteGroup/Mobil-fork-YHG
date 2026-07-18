@@ -40,6 +40,7 @@ export function SheetList({ sheets, userId }: { sheets: SheetRow[]; userId: stri
       ) : filtered.length === 0 ? (
         <div className="empty">No sheets match “{query}”.</div>
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
@@ -80,6 +81,7 @@ export function SheetList({ sheets, userId }: { sheets: SheetRow[]; userId: stri
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

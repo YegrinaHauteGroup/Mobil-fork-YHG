@@ -78,7 +78,7 @@ export function ShareDialog({
       <div className="label" style={{ marginBottom: 6 }}>
         Grant access to a user
       </div>
-      <div className="row" style={{ gap: 8, alignItems: "stretch" }}>
+      <div className="row share-grant-row" style={{ gap: 8, alignItems: "stretch" }}>
         <input
           className="input grow"
           placeholder="Recipient's Share ID (UUID)"
@@ -111,6 +111,7 @@ export function ShareDialog({
           Not shared with anyone yet.
         </div>
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <tbody>
             {shares.map((s) => (
@@ -136,6 +137,7 @@ export function ShareDialog({
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </Modal>
   );

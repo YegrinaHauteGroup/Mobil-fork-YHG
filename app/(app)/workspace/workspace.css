@@ -155,10 +155,24 @@
   cursor: col-resize;
   background: var(--border-0);
   position: relative;
+  touch-action: none;
 }
 .wk-divider:hover,
 .wk-divider.dragging {
   background: var(--steel);
+}
+@media (pointer: coarse) {
+  .wk-divider {
+    width: 6px;
+  }
+  .wk-divider::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -10px;
+    right: -10px;
+  }
 }
 .wk-loading {
   flex: 1;
@@ -167,4 +181,34 @@
   justify-content: center;
   color: var(--text-3);
   font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .wk-bar {
+    height: 42px;
+    padding: 0 6px;
+  }
+  .wk-tab {
+    height: 34px;
+    max-width: 150px;
+    padding: 0 6px 0 8px;
+  }
+  .wk-tab-close {
+    width: 22px;
+    height: 22px;
+  }
+  .wk-bar-actions {
+    padding-left: 4px;
+    margin-left: 2px;
+  }
+  .wk-icon-btn {
+    width: 34px;
+    height: 34px;
+  }
+  .wk-pane-head {
+    height: 36px;
+  }
+  .wk-pane-select {
+    height: 28px;
+  }
 }

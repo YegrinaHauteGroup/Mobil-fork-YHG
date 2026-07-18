@@ -1,6 +1,34 @@
 :root {
   --header-h: 48px;
   --rail-w: 56px;
+  --rail-w-mobile: 248px;
+}
+
+/*
+ * 반응형 기준점 — 최근 8년 내 실기기의 CSS 뷰포트 폭을 조사해 정함.
+ *   모바일: ~360-430px (Galaxy S21-S24, iPhone SE-15/16 Pro Max) → max-width 640px
+ *   태블릿: 641-1024px (iPad mini 744, Air/Pro 11" 820-834, Galaxy Tab ~800,
+ *           iPad Pro 12.9" 세로 1024) → 641-1024px
+ *   데스크톱: 1025px~ (아이패드 프로 가로 1366 포함)
+ * 폭 기준으로 나눈 이유: 가로모드 휴대폰(예: 844px)은 세로 태블릿과 여유 폭이
+ * 비슷해 "기기 종류"보다 "가용 폭" 기준이 실제 레이아웃 필요와 더 잘 맞는다.
+ */
+
+.hamburger-btn {
+  display: none;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-1);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+}
+.hamburger-btn:hover {
+  background: var(--bg-3);
+  border-color: var(--border-1);
 }
 
 /* App shell: fixed header on top, icon rail + main below it. */
@@ -332,6 +360,12 @@
 .rail-spacer {
   flex: 1;
 }
+.rail-label {
+  display: none;
+}
+.rail-backdrop {
+  display: none;
+}
 
 /* ---- main ---- */
 .app-main {
@@ -438,14 +472,135 @@
 }
 
 @media (max-width: 860px) {
-  .stat-grid {
-    grid-template-columns: 1fr;
-  }
   .acct-name {
     display: none;
   }
   .admin-cta-body {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* ==========================================================================
+   모바일 (≤640px) — 사이드바가 슬라이드인 드로어로 전환된다.
+   ========================================================================== */
+@media (max-width: 640px) {
+  .app-header {
+    gap: 8px;
+    padding: 0 10px;
+  }
+  .hamburger-btn {
+    display: flex;
+  }
+  .brand-logo {
+    font-size: 17px;
+  }
+
+  /* 검색창 — 로고/계정 메뉴와 겹치지 않도록 축소. 드롭다운은 화면 폭에
+     맞춰 좌우 12px 여백만 남기고 꽉 채운다(중앙 정렬 transform 제거). */
+  .hsearch-input {
+    max-width: none;
+    height: 30px;
+    font-size: 12.5px;
+    padding: 0 10px;
+  }
+  .hsearch-dropdown {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    top: calc(var(--header-h) + 4px);
+    width: auto;
+    max-width: none;
+    transform: none;
+    max-height: calc(100vh - var(--header-h) - 16px);
+  }
+
+  .acct-menu {
+    max-width: calc(100vw - 16px);
+  }
+
+  /* 아이콘 레일 → 드로어. 헤더 아래에 고정, 기본은 화면 밖으로 밀어둠. */
+  .rail {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    bottom: 0;
+    width: var(--rail-w-mobile);
+    max-width: 82vw;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px;
+    gap: 2px;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    z-index: 50;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.5);
+  }
+  .rail.open {
+    transform: translateX(0);
+  }
+  .rail-backdrop {
+    display: block;
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(4, 6, 8, 0.6);
+    z-index: 45;
+  }
+  .rail-link {
+    width: 100%;
+    height: 44px;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 12px;
+  }
+  .rail-label {
+    display: inline;
+    font-size: 13.5px;
+  }
+  .rail-sep {
+    width: 100%;
+    margin: 8px 0;
+  }
+  .rail-spacer {
+    display: none;
+  }
+
+  .topbar {
+    padding: 0 14px;
+    height: 42px;
+  }
+  .crumb {
+    display: none;
+  }
+  .content {
+    padding: 14px;
+  }
+  .page-head {
+    flex-wrap: wrap;
+  }
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stat {
+    padding: 12px 14px;
+  }
+  .stat-val {
+    font-size: 20px;
+  }
+}
+
+/* 터치 입력 기기 전용 — 마우스 정밀도가 없는 화면에서 작은 아이콘 버튼의
+   탭 영역을 넓힌다(Apple HIG ≥44pt / Material ≥48dp 권장에 근접). */
+@media (max-width: 640px) and (pointer: coarse) {
+  .wk-icon-btn,
+  .wk-tab-close,
+  .search-result-expand,
+  .acct-btn {
+    min-width: 36px;
+    min-height: 36px;
   }
 }

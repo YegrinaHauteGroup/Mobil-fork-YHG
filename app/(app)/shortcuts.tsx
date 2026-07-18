@@ -94,6 +94,7 @@ export function Shortcuts() {
   if (!help) return null;
   return (
     <Modal title="Keyboard shortcuts" onClose={() => setHelp(false)} width={420}>
+      <div className="table-scroll">
       <table className="table">
         <tbody>
           {HELP.map(([k, d]) => (
@@ -108,6 +109,7 @@ export function Shortcuts() {
           ))}
         </tbody>
       </table>
+      </div>
     </Modal>
   );
 }

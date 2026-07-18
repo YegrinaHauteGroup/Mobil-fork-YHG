@@ -93,7 +93,12 @@ export const SlashCommand = Extension.create({
             if (!popup) return;
             const rect = props.clientRect?.();
             if (!rect) return;
-            popup.style.left = `${rect.left + window.scrollX}px`;
+            // 메뉴 폭(작은 화면에선 css 로 100vw-32px 까지 줄어듦)만큼 오른쪽 여백을
+            // 확보해 화면 밖으로 나가지 않게 좌표를 clamp 한다.
+            const menuWidth = popup.offsetWidth || 240;
+            const maxLeft = window.innerWidth - menuWidth - 8;
+            const left = Math.max(8, Math.min(rect.left + window.scrollX, maxLeft + window.scrollX));
+            popup.style.left = `${left}px`;
             popup.style.top = `${rect.bottom + window.scrollY + 6}px`;
           };
 

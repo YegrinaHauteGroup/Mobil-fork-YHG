@@ -72,13 +72,14 @@ export default async function AdminConsolePage() {
               Manage all users →
             </Link>
           </div>
+          <div className="table-scroll">
           <table className="table">
             <thead>
               <tr>
                 <th>Email</th>
-                <th>Name</th>
+                <th className="col-hide-mobile">Name</th>
                 <th style={{ width: 90 }}>Role</th>
-                <th style={{ width: 180 }}>Joined</th>
+                <th style={{ width: 180 }} className="col-hide-mobile">Joined</th>
               </tr>
             </thead>
             <tbody>
@@ -87,7 +88,7 @@ export default async function AdminConsolePage() {
                   <td className="mono" style={{ fontSize: 12 }}>
                     {u.email}
                   </td>
-                  <td>{u.display_name || "—"}</td>
+                  <td className="col-hide-mobile">{u.display_name || "—"}</td>
                   <td>
                     {u.role === "admin" ? (
                       <span className="badge badge-admin">admin</span>
@@ -95,13 +96,14 @@ export default async function AdminConsolePage() {
                       <span className="badge">user</span>
                     )}
                   </td>
-                  <td className="mono muted" style={{ fontSize: 12 }}>
+                  <td className="mono muted col-hide-mobile" style={{ fontSize: 12 }}>
                     {formatDate(u.created_at)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="panel">
@@ -111,13 +113,14 @@ export default async function AdminConsolePage() {
           {logs.length === 0 ? (
             <div className="empty">No audit logs.</div>
           ) : (
+            <div className="table-scroll">
             <table className="table">
               <thead>
                 <tr>
                   <th style={{ width: 90 }}>Action</th>
-                  <th style={{ width: 100 }}>Target</th>
+                  <th style={{ width: 100 }} className="col-hide-mobile">Target</th>
                   <th>Target ID</th>
-                  <th style={{ width: 180 }}>Time</th>
+                  <th style={{ width: 180 }} className="col-hide-mobile">Time</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,19 +129,20 @@ export default async function AdminConsolePage() {
                     <td>
                       <span className="badge">{l.action}</span>
                     </td>
-                    <td className="mono muted" style={{ fontSize: 12 }}>
+                    <td className="mono muted col-hide-mobile" style={{ fontSize: 12 }}>
                       {l.target_type}
                     </td>
                     <td className="mono muted" style={{ fontSize: 12 }}>
                       {l.target_id}
                     </td>
-                    <td className="mono muted" style={{ fontSize: 12 }}>
+                    <td className="mono muted col-hide-mobile" style={{ fontSize: 12 }}>
                       {formatDate(l.created_at)}
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

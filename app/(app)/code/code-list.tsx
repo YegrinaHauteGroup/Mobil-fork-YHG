@@ -45,6 +45,7 @@ export function CodeList({ files, userId }: { files: CodeRow[]; userId: string }
       ) : filtered.length === 0 ? (
         <div className="empty">No files match “{query}”.</div>
       ) : (
+        <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
@@ -91,6 +92,7 @@ export function CodeList({ files, userId }: { files: CodeRow[]; userId: string }
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   );

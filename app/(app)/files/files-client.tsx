@@ -211,14 +211,15 @@ export function FilesClient({
         ) : filtered.length === 0 ? (
           <div className="empty">No files match “{query}”.</div>
         ) : (
+          <div className="table-scroll">
           <table className="table">
             <thead>
               <tr>
                 <th>Name</th>
-                <th style={{ width: 120 }}>Type</th>
+                <th style={{ width: 120 }} className="col-hide-mobile">Type</th>
                 <th style={{ width: 100 }}>Size</th>
-                <th style={{ width: 160 }}>Uploaded</th>
-                <th style={{ width: 60 }}>Owner</th>
+                <th style={{ width: 160 }} className="col-hide-mobile">Uploaded</th>
+                <th style={{ width: 60 }} className="col-hide-mobile">Owner</th>
                 <th style={{ width: 280 }}></th>
               </tr>
             </thead>
@@ -228,18 +229,18 @@ export function FilesClient({
                 return (
                   <tr key={f.id}>
                     <td>{f.file_name}</td>
-                    <td className="mono muted" style={{ fontSize: 12 }}>
+                    <td className="mono muted col-hide-mobile" style={{ fontSize: 12 }}>
                       {f.mime_type || "—"}
                     </td>
                     <td className="mono muted">{formatBytes(f.size_bytes)}</td>
-                    <td className="mono muted" style={{ fontSize: 12 }}>
+                    <td className="mono muted col-hide-mobile" style={{ fontSize: 12 }}>
                       {formatDate(f.created_at)}
                     </td>
-                    <td>
+                    <td className="col-hide-mobile">
                       <span className="badge">{owned ? "Mine" : "Shared"}</span>
                     </td>
                     <td>
-                      <div className="row" style={{ gap: 4 }}>
+                      <div className="row row-actions" style={{ gap: 4 }}>
                         <button
                           className="btn btn-ghost btn-sm"
                           onClick={() => download(f.id)}
@@ -278,6 +279,7 @@ export function FilesClient({
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
 

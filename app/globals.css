@@ -276,11 +276,24 @@ a:hover {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border-0);
   background: var(--bg-3);
+  gap: 10px;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .panel-header input.input {
+    width: 100% !important;
+    max-width: none;
+  }
 }
 .panel-body {
   padding: 16px;
 }
 
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -308,6 +321,24 @@ a:hover {
 }
 .table tbody tr:last-child td {
   border-bottom: none;
+}
+.row-actions {
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .col-hide-mobile {
+    display: none;
+  }
+  .share-grant-row {
+    flex-wrap: wrap;
+  }
+  .share-grant-row .select {
+    flex: 1;
+    width: auto !important;
+  }
+  .share-grant-row .btn {
+    flex: none;
+  }
 }
 .link-btn {
   background: none;

@@ -46,24 +46,27 @@ export const ResizableImage = Image.extend({
         );
       };
 
-      const onMove = (e: MouseEvent) => {
+      // Pointer Events 로 마우스/터치(모바일·태블릿)를 한 번에 처리한다.
+      const onMove = (e: PointerEvent) => {
         const dx = e.clientX - startX;
         const next = Math.max(60, Math.min(920, startWidth + dx));
         img.style.width = `${next}px`;
       };
-      const onUp = () => {
-        document.removeEventListener("mousemove", onMove);
-        document.removeEventListener("mouseup", onUp);
+      const onUp = (e: PointerEvent) => {
+        handle.releasePointerCapture(e.pointerId);
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
         commitWidth(img.getBoundingClientRect().width);
       };
-      handle.addEventListener("mousedown", (e) => {
+      handle.addEventListener("pointerdown", (e) => {
         if (!editor.isEditable) return;
         e.preventDefault();
         e.stopPropagation();
         startX = e.clientX;
         startWidth = img.getBoundingClientRect().width;
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
+        handle.setPointerCapture(e.pointerId);
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
       });
 
       return {
