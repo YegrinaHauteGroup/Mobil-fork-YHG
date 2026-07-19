@@ -1,12 +1,14 @@
 import "./connected-systems.css";
-import { LogoSupabase, LogoVercel, LogoNvidia, LogoOracle } from "./brand-logos";
 
 type SystemStatus = "connected" | "not-configured" | "coming-soon";
 
 type SystemInfo = {
   key: string;
   name: string;
-  logo: React.ReactNode;
+  logoSrc: string;
+  /** 로고 칩 배경 — 원본 이미지 배경에 맞춘다(흰 배경 로고는 흰 칩, Oracle 은
+   * 이미지 자체에 브랜드 배경색이 이미 채워져 있어 칩 없이 그대로 보여준다). */
+  logoChip: "white" | "none";
   status: SystemStatus;
   statusLabel: string;
   details: string[];
@@ -32,7 +34,8 @@ export function ConnectedSystems() {
     {
       key: "supabase",
       name: "Supabase",
-      logo: <LogoSupabase size={26} />,
+      logoSrc: "/brand/supabase.png",
+      logoChip: "white",
       status: supabaseHost ? "connected" : "not-configured",
       statusLabel: supabaseHost ? "Connected" : "Not configured",
       details: [
@@ -44,7 +47,8 @@ export function ConnectedSystems() {
     {
       key: "vercel",
       name: "Vercel",
-      logo: <LogoVercel size={26} />,
+      logoSrc: "/brand/vercel.png",
+      logoChip: "white",
       status: onVercel ? "connected" : "not-configured",
       statusLabel: onVercel ? "Connected" : "Not detected",
       details: ["Edge & Serverless Functions", "Region: icn1 (Seoul)"],
@@ -52,7 +56,8 @@ export function ConnectedSystems() {
     {
       key: "nvidia",
       name: "NVIDIA AI",
-      logo: <LogoNvidia size={26} />,
+      logoSrc: "/brand/nvidia.png",
+      logoChip: "white",
       status: nvidiaConfigured ? "connected" : "not-configured",
       statusLabel: nvidiaConfigured ? "Connected" : "Not configured",
       details: ["Model: meta/llama-3.3-70b-instruct", "Powers Sophia"],
@@ -60,7 +65,8 @@ export function ConnectedSystems() {
     {
       key: "oracle",
       name: "Oracle",
-      logo: <LogoOracle size={26} />,
+      logoSrc: "/brand/oracle.png",
+      logoChip: "none",
       status: "coming-soon",
       statusLabel: "Coming soon",
       details: ["Infrastructure — planned integration"],
@@ -77,7 +83,9 @@ export function ConnectedSystems() {
           {systems.map((s) => (
             <div key={s.key} className={`sys-card sys-card-${s.status}`}>
               <div className="sys-card-top">
-                <span className="sys-logo">{s.logo}</span>
+                <span className={`sys-logo sys-logo-${s.logoChip}`}>
+                  <img src={s.logoSrc} alt={s.name} />
+                </span>
                 <div className="sys-card-name-wrap">
                   <span className="sys-name">{s.name}</span>
                   <span className="sys-status">
