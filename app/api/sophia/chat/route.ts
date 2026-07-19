@@ -252,10 +252,36 @@ export async function POST(req: Request) {
 
   const isFirstMessage = (history ?? []).length <= 1;
 
-  const formatError = (r: { upstreamStatus: number | null; detail: string }) =>
-    `Sophia is unavailable right now (NVIDIA ${r.upstreamStatus ?? "network"}: ${
-      r.detail || "no detail"
-    })`;
+  /** 사용자에게도, 나중에 DB 로그를 읽는 사람에게도 원인이 바로 보이도록
+   * 흔한 실패 유형을 사람이 읽을 수 있는 힌트로 바꾼다. */
+  const formatError = (r: { upstreamStatus: number | null; detail: string }): string => {
+    const s = r.upstreamStatus;
+    const d = r.detail || "no detail";
+    if (d.includes("missing NVIDIA_API_KEY")) {
+      return "Sophia isn't configured: no NVIDIA_API_KEY / NVIDIA_API_KEY_2 is set in this deployment's environment variables.";
+    }
+    if (s === 401 || s === 403) {
+      return `Sophia's NVIDIA API key was rejected (HTTP ${s}). The key is missing, invalid, or lacks access to the model. Detail: ${d}`;
+    }
+    if (s === 404) {
+      return `NVIDIA returned 404 — the model "${NVIDIA_MODEL}" isn't available to this key/endpoint. Detail: ${d}`;
+    }
+    if (s === 429) {
+      return `NVIDIA rate limit hit (HTTP 429). Try again shortly. Detail: ${d}`;
+    }
+    return `Sophia is unavailable right now (NVIDIA ${s ?? "network"}: ${d})`;
+  };
+
+  /** 실패 진단을 assistant 메시지로 남긴다 — 화면에도 남고, DB 로그로도
+   * 정확한 원인을 되짚을 수 있다(그렇지 않으면 "그냥 안 됨"만 남는다). */
+  const saveAssistant = async (content: string) => {
+    await supabase
+      .from("ai_messages")
+      .insert({ conversation_id: conversationId, role: "assistant", content });
+    const nextTitle =
+      isFirstMessage && conv.title === "New chat" ? trimmed.slice(0, 60) : conv.title;
+    await supabase.from("ai_conversations").update({ title: nextTitle }).eq("id", conversationId);
+  };
 
   // 첫 업스트림 연결은 스트림을 열기 전에 확보한다 — 완전 실패(키 미설정,
   // 전 모드 거부 등)라면 이전처럼 적절한 HTTP 상태코드로 바로 응답할 수 있다.
@@ -270,7 +296,15 @@ export async function POST(req: Request) {
     first = await callNvidia(messages, { tools: false, stream: true });
   }
   if (!first.ok) {
-    return new Response(formatError(first), { status: 502 });
+    // 스트림을 열기 전에 완전히 실패 — 진단을 DB 에도 남기고, 클라이언트에는
+    // 200 텍스트로 그대로 흘려보낸다(스트림 리더가 항상 본문을 읽으므로
+    // 사용자가 반드시 원인 문구를 보게 된다).
+    const diagnostic = formatError(first);
+    await saveAssistant(diagnostic);
+    return new Response(diagnostic, {
+      status: 200,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
   if (toolsMode !== "stream") {
     console.warn(`[sophia] degraded tools mode: ${toolsMode}`);
@@ -341,18 +375,11 @@ export async function POST(req: Request) {
           break;
         }
       } finally {
-        if (failed && !full) {
-          controller.enqueue(encoder.encode(failed));
-        } else {
-          const finalContent = full || "…";
-          await supabase
-            .from("ai_messages")
-            .insert({ conversation_id: conversationId, role: "assistant", content: finalContent });
-
-          const nextTitle =
-            isFirstMessage && conv.title === "New chat" ? trimmed.slice(0, 60) : conv.title;
-          await supabase.from("ai_conversations").update({ title: nextTitle }).eq("id", conversationId);
-        }
+        // 성공이면 최종 답을, 실패면 진단 문구를 — 어느 쪽이든 assistant
+        // 메시지로 저장해 화면·DB 양쪽에 흔적을 남긴다.
+        const finalContent = failed && !full ? failed : full || "…";
+        if (failed && !full) controller.enqueue(encoder.encode(failed));
+        await saveAssistant(finalContent);
         controller.close();
       }
     },
