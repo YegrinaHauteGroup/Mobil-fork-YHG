@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "../../workspace/workspace-context";
 import { ContributorBadges } from "../../contributors/contributor-badges";
+import { createMindmapFromSheet } from "../../convert-actions";
 import { Workbook } from "@fortune-sheet/react";
 import type { Sheet } from "@fortune-sheet/core";
 import type { Json } from "@/lib/database.types";
@@ -54,7 +55,7 @@ export function Spreadsheet({
   myShareId: string;
 }) {
   const router = useRouter();
-  const { renameTab } = useWorkspace();
+  const { renameTab, openTab } = useWorkspace();
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [pub, setPub] = useState(isPublic);
@@ -62,6 +63,7 @@ export function Spreadsheet({
   const [error, setError] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [converting, setConverting] = useState(false);
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -139,6 +141,22 @@ export function Spreadsheet({
     persist();
   };
 
+  const onConvertToMindmap = async () => {
+    setConverting(true);
+    setError(null);
+    if (canEdit) {
+      if (timer.current) clearTimeout(timer.current);
+      await persist();
+    }
+    const res = await createMindmapFromSheet(sheetId);
+    setConverting(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
+    openTab("mindmap", res.id, res.title, res.seed);
+  };
+
   const togglePublic = async () => {
     const next = !pub;
     setPub(next);
@@ -193,6 +211,14 @@ export function Spreadsheet({
               </button>
             </>
           )}
+          <button
+            className="btn btn-sm"
+            onClick={onConvertToMindmap}
+            disabled={converting}
+            title="Create a new mind map from column A (Level) / column B (Topic)"
+          >
+            {converting ? "Converting…" : "→ Mind map"}
+          </button>
           <div style={{ position: "relative" }}>
             <button
               className="btn btn-sm"
