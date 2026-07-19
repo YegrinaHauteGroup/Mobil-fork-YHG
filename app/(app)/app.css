@@ -39,6 +39,10 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--bg-0);
+  /* AppLayout 이 새로 마운트될 때(콜드 진입 · Reconnecting 화면 다음)만
+     재생된다 — (app) 세그먼트 내부 탭 이동은 이 레이아웃을 리마운트하지
+     않으므로 평소 화면 전환에서는 반복되지 않는다. */
+  animation: mobil-fade-in 0.4s ease both;
 }
 
 /* ---- fixed header ---- */

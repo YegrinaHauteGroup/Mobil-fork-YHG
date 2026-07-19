@@ -1,6 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { login, type AuthState } from "./actions";
 
 export function LoginForm({ redirectTo }: { redirectTo?: string }) {
@@ -8,42 +10,76 @@ export function LoginForm({ redirectTo }: { redirectTo?: string }) {
     login,
     null
   );
+  const router = useRouter();
+  const navigatedRef = useRef(false);
+
+  const success = !!(state && "ok" in state && state.ok);
+  const busy = pending || success;
+
+  useEffect(() => {
+    if (!success || navigatedRef.current) return;
+    navigatedRef.current = true;
+    // 카드가 fade-out 되는 동안 잠깐 기다렸다가 넘어간다 — auth-card-leaving 의
+    // CSS transition 시간과 맞춰야 화면이 뚝 끊기지 않는다.
+    const redirectPath = (state as { ok: true; redirectTo: string }).redirectTo;
+    const t = setTimeout(() => router.push(redirectPath), 260);
+    return () => clearTimeout(t);
+  }, [success, state, router]);
 
   return (
-    <form action={formAction}>
-      {state?.error && <div className="notice notice-error">{state.error}</div>}
-      <input type="hidden" name="redirect" value={redirectTo || "/dashboard"} />
-      <div className="field">
-        <label className="label" htmlFor="email">
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          className="input"
-          autoComplete="email"
-          placeholder="you@example.com"
-          required
-        />
+    <div className={`auth-card ${success ? "auth-card-leaving" : ""}`}>
+      <div className="auth-brand">
+        <span className="brand-logo brand-logo-lg">Mobil</span>
       </div>
-      <div className="field">
-        <label className="label" htmlFor="password">
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          className="input"
-          autoComplete="current-password"
-          placeholder="••••••••"
-          required
-        />
+      <form action={formAction}>
+        {state && "error" in state && (
+          <div className="notice notice-error">{state.error}</div>
+        )}
+        <input type="hidden" name="redirect" value={redirectTo || "/dashboard"} />
+        <div className="field">
+          <label className="label" htmlFor="email">
+            Email
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            className="input"
+            autoComplete="email"
+            placeholder="you@example.com"
+            required
+            disabled={busy}
+          />
+        </div>
+        <div className="field">
+          <label className="label" htmlFor="password">
+            Password
+          </label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            className="input"
+            autoComplete="current-password"
+            placeholder="••••••••"
+            required
+            disabled={busy}
+          />
+        </div>
+        <button type="submit" className="btn btn-primary btn-block" disabled={busy}>
+          {busy ? (
+            <span className="auth-authorizing">
+              <span className="auth-spinner" aria-hidden="true" />
+              Authorizing…
+            </span>
+          ) : (
+            "Sign in"
+          )}
+        </button>
+      </form>
+      <div className="auth-foot">
+        No account? <Link href="/signup">Sign up</Link>
       </div>
-      <button type="submit" className="btn btn-primary btn-block" disabled={pending}>
-        {pending ? "Signing in…" : "Sign in"}
-      </button>
-    </form>
+    </div>
   );
 }
