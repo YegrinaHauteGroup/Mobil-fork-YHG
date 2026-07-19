@@ -21,6 +21,8 @@ import {
 import { useWorkspace } from "../../workspace/workspace-context";
 import { ContributorBadges } from "../../contributors/contributor-badges";
 import { formatBytes } from "@/lib/format";
+import { createDocumentFromMindmap, createSheetFromMindmap } from "../../convert-actions";
+import { connectSnapshotBroadcast } from "@/lib/snapshot-broadcast";
 
 type SaveState = "saved" | "dirty" | "saving";
 const AUTOSAVE_MS = 1200;
@@ -143,6 +145,8 @@ function Inner({
   const [showShare, setShowShare] = useState(false);
   const [pick, setPick] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showConvert, setShowConvert] = useState(false);
+  const [converting, setConverting] = useState(false);
   const [preview, setPreview] = useState<{ kind: RefKind; refId: string; label: string } | null>(null);
   const [previewInfo, setPreviewInfo] = useState<
     { status: "loading" } | { status: "ready"; data: ReferencePreview } | { status: "error" } | null
@@ -150,9 +154,26 @@ function Inner({
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleRef = useRef(title);
+  const saveStateRef = useRef<SaveState>("saved");
+  const broadcastRef = useRef<ReturnType<typeof connectSnapshotBroadcast<MindElixirData>> | null>(null);
   useEffect(() => {
     titleRef.current = title;
   }, [title]);
+  useEffect(() => {
+    saveStateRef.current = saveState;
+  }, [saveState]);
+
+  // 다른 접속자와 전체 맵 스냅샷을 실시간으로 주고받는다(문서/코드의 Yjs
+  // CRDT 와 달리 진짜 병합은 아니고, 저장할 때마다 통째로 브로드캐스트).
+  useEffect(() => {
+    const conn = connectSnapshotBroadcast<MindElixirData>(`mindmap:${mapId}`, (data) => {
+      // 로컬에 저장 안 된 편집이 있으면 방금 받은 스냅샷으로 덮어쓰지 않는다.
+      if (saveStateRef.current === "dirty") return;
+      meRef.current?.refresh(data);
+    });
+    broadcastRef.current = conn;
+    return () => conn.disconnect();
+  }, [mapId]);
 
   const persist = useCallback(async () => {
     const me = meRef.current;
@@ -160,8 +181,10 @@ function Inner({
     setSaveState("saving");
     const data = me.getData();
     const res = await saveMindMap(mapId, titleRef.current, data as unknown as Json);
-    if (res.ok) setSaveState("saved");
-    else {
+    if (res.ok) {
+      setSaveState("saved");
+      broadcastRef.current?.send(data);
+    } else {
       setSaveState("dirty");
       setError(res.error);
     }
@@ -269,6 +292,27 @@ function Inner({
     meRef.current?.scaleFit();
   };
 
+  const onConvert = async (target: "document" | "sheet") => {
+    setShowConvert(false);
+    setConverting(true);
+    setError(null);
+    // 변환은 DB 에 저장된 데이터를 읽으므로, 편집 권한이 있고 저장 안 된
+    // 내용이 있을 수 있으면 먼저 강제로 저장한다(읽기 전용 뷰어는 저장 권한이
+    // 없고 애초에 로컬 변경도 없으므로 건너뛴다).
+    if (canEdit) {
+      if (timer.current) clearTimeout(timer.current);
+      await persist();
+    }
+    const res =
+      target === "document" ? await createDocumentFromMindmap(mapId) : await createSheetFromMindmap(mapId);
+    setConverting(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
+    openTab(target, res.id, res.title, res.seed);
+  };
+
   useEffect(() => {
     if (!preview) return;
     let cancelled = false;
@@ -363,6 +407,25 @@ function Inner({
           >
             ● {stateLabel}
           </span>
+          <div style={{ position: "relative" }}>
+            <button
+              className="btn btn-sm"
+              onClick={() => setShowConvert((v) => !v)}
+              disabled={converting}
+            >
+              {converting ? "Converting…" : "Convert"}
+            </button>
+            {showConvert && (
+              <div className="acct-menu" style={{ top: 32, minWidth: 170 }}>
+                <button className="acct-item" onClick={() => onConvert("document")}>
+                  Create document (outline)
+                </button>
+                <button className="acct-item" onClick={() => onConvert("sheet")}>
+                  Create sheet (rows)
+                </button>
+              </div>
+            )}
+          </div>
           {isOwner && (
             <>
               <button className="btn btn-sm" onClick={togglePublic}>

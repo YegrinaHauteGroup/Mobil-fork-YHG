@@ -8,6 +8,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "../../workspace/workspace-context";
 import { ContributorBadges } from "../../contributors/contributor-badges";
+import { createMindmapFromSheet } from "../../convert-actions";
+import { connectSnapshotBroadcast } from "@/lib/snapshot-broadcast";
 import { Workbook } from "@fortune-sheet/react";
 import type { Sheet } from "@fortune-sheet/core";
 import type { Json } from "@/lib/database.types";
@@ -54,7 +56,7 @@ export function Spreadsheet({
   myShareId: string;
 }) {
   const router = useRouter();
-  const { renameTab } = useWorkspace();
+  const { renameTab, openTab } = useWorkspace();
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState<SaveState>("saved");
   const [pub, setPub] = useState(isPublic);
@@ -62,6 +64,7 @@ export function Spreadsheet({
   const [error, setError] = useState<string | null>(null);
   const [showExport, setShowExport] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [converting, setConverting] = useState(false);
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -77,15 +80,37 @@ export function Spreadsheet({
   const skipFirst = useRef(true);
   const titleRef = useRef(title);
   const sheetsRef = useRef<Sheet[]>(parseSheets(initialData));
+  const [remoteVersion, setRemoteVersion] = useState(0);
+  const saveStateRef = useRef<SaveState>("saved");
+  const broadcastRef = useRef<ReturnType<typeof connectSnapshotBroadcast<Sheet[]>> | null>(null);
   useEffect(() => {
     titleRef.current = title;
   }, [title]);
+  useEffect(() => {
+    saveStateRef.current = saveState;
+  }, [saveState]);
+
+  // 다른 접속자와 전체 시트 스냅샷을 실시간으로 주고받는다(문서/코드의 Yjs
+  // CRDT 와 달리 진짜 병합은 아니고, 저장할 때마다 통째로 브로드캐스트).
+  useEffect(() => {
+    const conn = connectSnapshotBroadcast<Sheet[]>(`sheet:${sheetId}`, (data) => {
+      // 로컬에 저장 안 된 편집이 있으면 방금 받은 스냅샷으로 덮어쓰지 않는다.
+      if (saveStateRef.current === "dirty") return;
+      sheetsRef.current = data;
+      skipFirst.current = true; // Workbook 리마운트 시 재초기화 콜백은 건너뛴다.
+      setRemoteVersion((v) => v + 1);
+    });
+    broadcastRef.current = conn;
+    return () => conn.disconnect();
+  }, [sheetId]);
 
   const persist = useCallback(async () => {
     setSaveState("saving");
     const res = await saveSheet(sheetId, titleRef.current, sheetsRef.current as unknown as Json);
-    if (res.ok) setSaveState("saved");
-    else {
+    if (res.ok) {
+      setSaveState("saved");
+      broadcastRef.current?.send(sheetsRef.current);
+    } else {
       setSaveState("dirty");
       setError(res.error);
     }
@@ -137,6 +162,22 @@ export function Spreadsheet({
   const manualSave = () => {
     if (timer.current) clearTimeout(timer.current);
     persist();
+  };
+
+  const onConvertToMindmap = async () => {
+    setConverting(true);
+    setError(null);
+    if (canEdit) {
+      if (timer.current) clearTimeout(timer.current);
+      await persist();
+    }
+    const res = await createMindmapFromSheet(sheetId);
+    setConverting(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
+    openTab("mindmap", res.id, res.title, res.seed);
   };
 
   const togglePublic = async () => {
@@ -193,6 +234,14 @@ export function Spreadsheet({
               </button>
             </>
           )}
+          <button
+            className="btn btn-sm"
+            onClick={onConvertToMindmap}
+            disabled={converting}
+            title="Create a new mind map from column A (Level) / column B (Topic)"
+          >
+            {converting ? "Converting…" : "→ Mind map"}
+          </button>
           <div style={{ position: "relative" }}>
             <button
               className="btn btn-sm"
@@ -232,6 +281,7 @@ export function Spreadsheet({
       <div className="sh-canvas">
         <div className="sh-paper">
           <Workbook
+            key={remoteVersion}
             data={sheetsRef.current}
             onChange={onSheetChange}
             allowEdit={canEdit}

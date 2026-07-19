@@ -35,6 +35,7 @@ import {
 import { downloadBase64File } from "@/lib/download-file";
 import { useWorkspace } from "../../workspace/workspace-context";
 import { ContributorBadges } from "../../contributors/contributor-badges";
+import { createMindmapFromDocument } from "../../convert-actions";
 
 type SaveState = "saved" | "dirty" | "saving";
 const AUTOSAVE_MS = 1200;
@@ -90,7 +91,7 @@ export function DocumentEditor({
   myShareId: string;
 }) {
   const router = useRouter();
-  const { renameTab } = useWorkspace();
+  const { renameTab, openTab } = useWorkspace();
   const supabase = createClient();
   const [title, setTitle] = useState(initialTitle);
   const [saveState, setSaveState] = useState<SaveState>("saved");
@@ -100,6 +101,7 @@ export function DocumentEditor({
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [converting, setConverting] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Yjs 문서: 실시간 동시편집 상태. 스냅샷이 있으면 복원하고, 없으면(레거시
@@ -227,6 +229,23 @@ export function DocumentEditor({
     persist(title, editor);
   };
 
+  const onConvertToMindmap = async () => {
+    setConverting(true);
+    setError(null);
+    // 변환은 DB 에 저장된 콘텐츠를 읽으므로, 편집 권한이 있으면 먼저 강제 저장.
+    if (canEdit) {
+      if (timer.current) clearTimeout(timer.current);
+      await persist(titleRef.current, editorRef.current);
+    }
+    const res = await createMindmapFromDocument(docId);
+    setConverting(false);
+    if ("error" in res) {
+      setError(res.error);
+      return;
+    }
+    openTab("mindmap", res.id, res.title, res.seed);
+  };
+
   const onTitle = (v: string) => {
     setTitle(v);
     // 제목을 바꾸면 열린 탭 이름도 즉시 갱신한다.
@@ -320,6 +339,14 @@ export function DocumentEditor({
               </button>
             </>
           )}
+          <button
+            className="btn btn-sm"
+            onClick={onConvertToMindmap}
+            disabled={converting}
+            title="Create a new mind map from this document's headings"
+          >
+            {converting ? "Converting…" : "→ Mind map"}
+          </button>
           <div style={{ position: "relative" }}>
             <button
               className="btn btn-sm"

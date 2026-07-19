@@ -22,9 +22,31 @@
 .auth-wrap-noscroll {
   overflow-y: hidden;
 }
+.auth-wrap {
+  animation: mobil-fade-in 0.4s ease both;
+}
 .auth-card {
   width: 100%;
   max-width: 380px;
+  transition: opacity 0.26s ease, transform 0.26s ease;
+}
+/* 로그인 성공 후 대시보드로 넘어가기 직전 — 카드가 살짝 위로 스치며 사라진다. */
+.auth-card-leaving {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+}
+.auth-authorizing {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.auth-spinner {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid rgba(234, 250, 239, 0.35);
+  border-top-color: #eafaef;
+  animation: mobil-spin 0.7s linear infinite;
 }
 .auth-brand {
   display: flex;

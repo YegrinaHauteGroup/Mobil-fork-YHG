@@ -29,18 +29,34 @@ export function extractTiptapPlainText(content: Json): string {
   return parts.join(" ");
 }
 
-/** 마인드맵 노드 라벨(제목 텍스트)을 이어붙인다(태그 추출용, best-effort). */
+type LegacyGraphNode = { data?: { label?: string; title?: string } };
+type MindElixirTreeNode = { topic?: string; note?: string; children?: MindElixirTreeNode[] };
+
+/** 마인드맵 노드 라벨(제목 텍스트)을 이어붙인다(태그 추출용, best-effort).
+ * Mind Elixir 트리 형식(nodeData.children)이 현재 저장 포맷이고, React Flow
+ * 시절의 구형 {nodes,edges} 그래프도 아직 열릴 수 있으니 둘 다 지원한다. */
 export function extractMindmapPlainText(data: Json): string {
   if (!data || typeof data !== "object" || Array.isArray(data)) return "";
-  const nodes = (data as { nodes?: unknown[] }).nodes;
-  if (!Array.isArray(nodes)) return "";
-
   const parts: string[] = [];
-  for (const n of nodes) {
-    if (!n || typeof n !== "object") continue;
-    const node = n as { data?: { label?: string; title?: string } };
-    if (typeof node.data?.label === "string") parts.push(node.data.label);
-    if (typeof node.data?.title === "string") parts.push(node.data.title);
+
+  const nodeData = (data as { nodeData?: MindElixirTreeNode }).nodeData;
+  if (nodeData && typeof nodeData === "object") {
+    const walk = (n: MindElixirTreeNode) => {
+      if (typeof n.topic === "string") parts.push(n.topic);
+      if (typeof n.note === "string") parts.push(n.note);
+      for (const child of n.children ?? []) walk(child);
+    };
+    walk(nodeData);
+    return parts.join(" ");
+  }
+
+  const legacyNodes = (data as { nodes?: LegacyGraphNode[] }).nodes;
+  if (Array.isArray(legacyNodes)) {
+    for (const n of legacyNodes) {
+      if (!n || typeof n !== "object") continue;
+      if (typeof n.data?.label === "string") parts.push(n.data.label);
+      if (typeof n.data?.title === "string") parts.push(n.data.title);
+    }
   }
   return parts.join(" ");
 }
