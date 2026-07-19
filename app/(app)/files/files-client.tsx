@@ -7,6 +7,7 @@ import { formatBytes, formatDate } from "@/lib/format";
 import { getFileCategory, FILE_CATEGORY_LABEL, type FileCategory } from "@/lib/file-category";
 import { extractTagsFromText } from "@/lib/tags";
 import { ShareDialog } from "@/components/share-dialog";
+import { StarButton } from "../star-button";
 import {
   deleteFile,
   getSignedUrl,
@@ -32,9 +33,11 @@ const BUCKET = "files";
 export function FilesClient({
   initialFiles,
   userId,
+  starredIds,
 }: {
   initialFiles: FileRow[];
   userId: string;
+  starredIds: string[];
 }) {
   const router = useRouter();
   const supabase = createClient();
@@ -44,9 +47,20 @@ export function FilesClient({
   const [shareTarget, setShareTarget] = useState<FileRow | null>(null);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<FileCategory | "all">("all");
+  const [starredOnly, setStarredOnly] = useState(false);
+  const [starredSet, setStarredSet] = useState(() => new Set(starredIds));
   const [dragOver, setDragOver] = useState(false);
   const dragDepth = useRef(0);
   const [pending, start] = useTransition();
+
+  const setStarred = (id: string, starred: boolean) => {
+    setStarredSet((prev) => {
+      const next = new Set(prev);
+      if (starred) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
 
   const onPick = () => inputRef.current?.click();
 
@@ -69,6 +83,7 @@ export function FilesClient({
     const q = query.trim().toLowerCase();
     return categorized
       .filter(({ category: c }) => category === "all" || c === category)
+      .filter(({ file: f }) => !starredOnly || starredSet.has(f.id))
       .filter(
         ({ file: f }) =>
           !q ||
@@ -76,7 +91,7 @@ export function FilesClient({
           (f.mime_type ?? "").toLowerCase().includes(q)
       )
       .map(({ file }) => file);
-  }, [categorized, query, category]);
+  }, [categorized, query, category, starredOnly, starredSet]);
 
   const uploadFiles = async (fileList: FileList | File[] | null) => {
     const files = fileList ? Array.from(fileList) : [];
@@ -191,9 +206,6 @@ export function FilesClient({
       <div className="page-head">
         <div>
           <h1 className="page-h">Repository</h1>
-          <p className="page-sub">
-            Your own and shared files. Drag & drop files here to upload.
-          </p>
         </div>
         <div className="row">
           <input
@@ -241,15 +253,25 @@ export function FilesClient({
         <div className="panel-header">
           <span className="label">
             FILES ({filtered.length}
-            {query || category !== "all" ? ` / ${initialFiles.length}` : ""})
+            {query || category !== "all" || starredOnly ? ` / ${initialFiles.length}` : ""})
           </span>
-          <input
-            className="input"
-            style={{ width: 240, height: 30 }}
-            placeholder="Search name or type…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          <div className="row" style={{ gap: 8 }}>
+            <button
+              type="button"
+              className={`btn btn-ghost btn-sm filter-star ${starredOnly ? "active" : ""}`}
+              onClick={() => setStarredOnly((v) => !v)}
+              aria-pressed={starredOnly}
+            >
+              {starredOnly ? "★" : "☆"} Starred
+            </button>
+            <input
+              className="input"
+              style={{ width: 240, height: 30 }}
+              placeholder="Search name or type…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
         </div>
         {initialFiles.length === 0 ? (
           <div className="empty">
@@ -257,13 +279,16 @@ export function FilesClient({
           </div>
         ) : filtered.length === 0 ? (
           <div className="empty">
-            No files match{query ? ` “${query}”` : ` this filter`}.
+            {starredOnly && !query
+              ? "No starred files."
+              : `No files match${query ? ` “${query}”` : " this filter"}.`}
           </div>
         ) : (
           <div className="table-scroll">
           <table className="table">
             <thead>
               <tr>
+                <th style={{ width: 34 }}></th>
                 <th>Name</th>
                 <th style={{ width: 120 }} className="col-hide-mobile">Type</th>
                 <th style={{ width: 100 }}>Size</th>
@@ -277,6 +302,14 @@ export function FilesClient({
                 const owned = f.owner_id === userId;
                 return (
                   <tr key={f.id}>
+                    <td>
+                      <StarButton
+                        kind="file"
+                        id={f.id}
+                        initialStarred={starredSet.has(f.id)}
+                        onChange={(v) => setStarred(f.id, v)}
+                      />
+                    </td>
                     <td>{f.file_name}</td>
                     <td className="mono muted col-hide-mobile" style={{ fontSize: 12 }}>
                       {f.mime_type || "—"}

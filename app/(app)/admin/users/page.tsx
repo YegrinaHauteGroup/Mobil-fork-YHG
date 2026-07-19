@@ -33,9 +33,6 @@ export default async function AdminUsersPage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Manage Users</h1>
-            <p className="page-sub">
-              Every Mobil account — role, content counts and storage usage.
-            </p>
           </div>
         </div>
 

@@ -65,11 +65,6 @@ export function AppHeader({
         </button>
         {open && (
           <div className="acct-menu">
-            <div className="acct-license">
-              <div className="acct-license-title">Mobil 1.0</div>
-              <div className="acct-license-line">Developed by Haewon Jeong</div>
-              <div className="acct-license-line">Apache License 2.0</div>
-            </div>
             <div className="acct-head">
               <div className="n">{name}</div>
               <div className="e">{email}</div>

@@ -16,10 +16,6 @@ export default async function BigBrotherPage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Big Brother</h1>
-            <p className="page-sub">
-              Unified search across papers (OpenAlex, Semantic Scholar) and code (GitHub). Add any
-              result straight into Mobil.
-            </p>
           </div>
         </div>
         <BigBrotherSearch />

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/format";
 import { OpenItemButton } from "../workspace/open-item-button";
+import { StarButton } from "../star-button";
 
 type DocRow = {
   id: string;
@@ -15,41 +16,69 @@ type DocRow = {
 export function DocumentsList({
   docs,
   userId,
+  starredIds,
 }: {
   docs: DocRow[];
   userId: string;
+  starredIds: string[];
 }) {
   const [query, setQuery] = useState("");
+  const [starredOnly, setStarredOnly] = useState(false);
+  const [starredSet, setStarredSet] = useState(() => new Set(starredIds));
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return docs;
-    return docs.filter((d) => (d.title || "").toLowerCase().includes(q));
-  }, [docs, query]);
+    return docs
+      .filter((d) => !starredOnly || starredSet.has(d.id))
+      .filter((d) => !q || (d.title || "").toLowerCase().includes(q));
+  }, [docs, query, starredOnly, starredSet]);
+
+  const setStarred = (id: string, starred: boolean) => {
+    setStarredSet((prev) => {
+      const next = new Set(prev);
+      if (starred) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
 
   return (
     <div className="panel">
       <div className="panel-header">
         <span className="label">
           DOCS + ({filtered.length}
-          {query ? ` / ${docs.length}` : ""})
+          {query || starredOnly ? ` / ${docs.length}` : ""})
         </span>
-        <input
-          className="input"
-          style={{ width: 240, height: 30 }}
-          placeholder="Search title…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <div className="row" style={{ gap: 8 }}>
+          <button
+            type="button"
+            className={`btn btn-ghost btn-sm filter-star ${starredOnly ? "active" : ""}`}
+            onClick={() => setStarredOnly((v) => !v)}
+            aria-pressed={starredOnly}
+          >
+            {starredOnly ? "★" : "☆"} Starred
+          </button>
+          <input
+            className="input"
+            style={{ width: 240, height: 30 }}
+            placeholder="Search title…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
       </div>
       {docs.length === 0 ? (
         <div className="empty">No docs yet. Use “New document” to start.</div>
       ) : filtered.length === 0 ? (
-        <div className="empty">No docs match “{query}”.</div>
+        <div className="empty">
+          {starredOnly ? "No starred docs." : `No docs match “${query}”.`}
+        </div>
       ) : (
         <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
+              <th style={{ width: 34 }}></th>
               <th>Title</th>
               <th style={{ width: 90 }}>Visibility</th>
               <th style={{ width: 60 }}>Owner</th>
@@ -60,6 +89,14 @@ export function DocumentsList({
           <tbody>
             {filtered.map((d) => (
               <tr key={d.id}>
+                <td>
+                  <StarButton
+                    kind="document"
+                    id={d.id}
+                    initialStarred={starredSet.has(d.id)}
+                    onChange={(v) => setStarred(d.id, v)}
+                  />
+                </td>
                 <td>
                   <OpenItemButton kind="document" id={d.id} title={d.title || "Untitled"} className="link-btn">
                     {d.title || "Untitled"}

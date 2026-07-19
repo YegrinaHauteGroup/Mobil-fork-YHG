@@ -16,9 +16,6 @@ export default async function RedeemPage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Redeem Admin Code</h1>
-            <p className="page-sub">
-              Enter an admin code to elevate your account to admin.
-            </p>
           </div>
         </div>
 

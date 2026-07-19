@@ -45,9 +45,6 @@ export default async function AdminConsolePage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Admin Console</h1>
-            <p className="page-sub">
-              Issue admin codes; browse users and audit logs.
-            </p>
           </div>
         </div>
 

@@ -25,10 +25,6 @@ export default async function MindMapPage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Link Graph</h1>
-            <p className="page-sub">
-              Arrange files, code and documents as nodes and connect them with
-              parent-child links on a free-form canvas.
-            </p>
           </div>
           <NewItemButton kind="mindmap" label="New map" create={createMindMapTab} />
         </div>
