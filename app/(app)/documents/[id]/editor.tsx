@@ -5,6 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import { Node, mergeAttributes } from "@tiptap/core";
+import * as Y from "yjs";
+import Collaboration from "@tiptap/extension-collaboration";
+import { connectYjsBroadcast, encodeYUpdate, decodeYUpdate } from "@/lib/yjs-transport";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
@@ -31,6 +34,7 @@ import {
 } from "../actions";
 import { downloadBase64File } from "@/lib/download-file";
 import { useWorkspace } from "../../workspace/workspace-context";
+import { ContributorBadges } from "../../contributors/contributor-badges";
 
 type SaveState = "saved" | "dirty" | "saving";
 const AUTOSAVE_MS = 1200;
@@ -70,6 +74,7 @@ export function DocumentEditor({
   docId,
   initialTitle,
   initialContent,
+  initialYjsState,
   canEdit,
   isOwner,
   isPublic,
@@ -78,6 +83,7 @@ export function DocumentEditor({
   docId: string;
   initialTitle: string;
   initialContent: Json;
+  initialYjsState: string | null;
   canEdit: boolean;
   isOwner: boolean;
   isPublic: boolean;
@@ -96,6 +102,23 @@ export function DocumentEditor({
   const [exporting, setExporting] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Yjs 문서: 실시간 동시편집 상태. 스냅샷이 있으면 복원하고, 없으면(레거시
+  // 문서 최초 오픈) 빈 채로 시작해 마운트 후 기존 Tiptap JSON 으로 부트스트랩한다.
+  const ydocRef = useRef<Y.Doc | null>(null);
+  if (!ydocRef.current) {
+    const doc = new Y.Doc();
+    if (initialYjsState) {
+      try {
+        Y.applyUpdate(doc, decodeYUpdate(initialYjsState));
+      } catch {
+        // 손상된 스냅샷은 무시 — 아래에서 빈 문서로 간주해 initialContent 로 채운다.
+      }
+    }
+    ydocRef.current = doc;
+  }
+  const ydoc = ydocRef.current;
+  const bootstrapped = useRef(false);
+
   const onExport = async (format: DocExportFormat) => {
     setShowExport(false);
     setExporting(true);
@@ -110,7 +133,10 @@ export function DocumentEditor({
     editable: canEdit,
     immediatelyRender: false,
     extensions: [
-      StarterKit,
+      // Yjs 가 문서 상태(및 히스토리)를 대신 관리하므로 StarterKit 기본
+      // history 는 끈다 — 같이 켜두면 undo 스택이 서로 꼬인다.
+      StarterKit.configure({ history: false }),
+      Collaboration.configure({ document: ydoc }),
       Underline,
       TextStyle,
       Color,
@@ -123,25 +149,40 @@ export function DocumentEditor({
       Placeholder.configure({ placeholder: "Write your idea here… (type / for commands)" }),
       SlashCommand,
     ],
-    content: isTiptapDoc(initialContent) ? (initialContent as object) : "",
     editorProps: { attributes: { class: "ProseMirror" } },
     onUpdate: () => {
       if (canEdit) markDirty();
     },
   });
 
+  // Yjs 문서가 비어 있으면(기존 방식으로 저장된 레거시 문서를 이 기능이
+  // 나온 뒤 처음 여는 경우) 기존 Tiptap JSON 콘텐츠로 한 번만 채워 넣는다.
+  useEffect(() => {
+    if (!editor || bootstrapped.current) return;
+    bootstrapped.current = true;
+    if (!initialYjsState && isTiptapDoc(initialContent)) {
+      editor.commands.setContent(initialContent as object, false);
+    }
+  }, [editor, initialContent, initialYjsState]);
+
+  // Supabase Realtime Broadcast 로 다른 접속자와 Yjs 업데이트를 주고받는다.
+  useEffect(() => {
+    return connectYjsBroadcast(ydoc, `doc:${docId}`);
+  }, [ydoc, docId]);
+
   const persist = useCallback(
     async (nextTitle: string, ed: Editor | null) => {
       if (!ed) return;
       setSaveState("saving");
-      const res = await saveDocument(docId, nextTitle, ed.getJSON() as Json);
+      const yjsState = encodeYUpdate(Y.encodeStateAsUpdate(ydoc));
+      const res = await saveDocument(docId, nextTitle, ed.getJSON() as Json, yjsState);
       if (res.ok) setSaveState("saved");
       else {
         setSaveState("dirty");
         setError(res.error);
       }
     },
-    [docId]
+    [docId, ydoc]
   );
 
   const titleRef = useRef(title);
@@ -258,6 +299,7 @@ export function DocumentEditor({
           disabled={!canEdit}
         />
         <div className="row" style={{ gap: 10 }}>
+          <ContributorBadges kind="document" id={docId} refreshToken={saveState} />
           <span
             className={`save-state ${
               saveState === "dirty" ? "dirty" : saveState === "saved" ? "saved" : ""

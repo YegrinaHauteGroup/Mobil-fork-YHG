@@ -17,7 +17,7 @@ export default async function DocumentPage({
 
   const { data: doc } = await supabase
     .from("documents")
-    .select("id, owner_id, title, content, is_public, updated_at")
+    .select("id, owner_id, title, content, is_public, updated_at, yjs_state")
     .eq("id", id)
     .single();
 
@@ -54,6 +54,7 @@ export default async function DocumentPage({
         docId={doc.id}
         initialTitle={doc.title}
         initialContent={doc.content}
+        initialYjsState={doc.yjs_state}
         canEdit={canEdit}
         isOwner={isOwner}
         isPublic={doc.is_public}

@@ -7,6 +7,7 @@ import "./spreadsheet.css";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWorkspace } from "../../workspace/workspace-context";
+import { ContributorBadges } from "../../contributors/contributor-badges";
 import { Workbook } from "@fortune-sheet/react";
 import type { Sheet } from "@fortune-sheet/core";
 import type { Json } from "@/lib/database.types";
@@ -171,6 +172,7 @@ export function Spreadsheet({
           />
         </div>
         <div className="row" style={{ gap: 10 }}>
+          <ContributorBadges kind="sheet" id={sheetId} refreshToken={saveState} />
           <span
             className={`save-state ${
               saveState === "dirty" ? "dirty" : saveState === "saved" ? "saved" : ""

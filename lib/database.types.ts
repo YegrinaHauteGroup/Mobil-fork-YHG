@@ -79,6 +79,7 @@ export interface Database {
           is_public: boolean;
           created_at: string;
           updated_at: string;
+          yjs_state: string | null;
         };
         Insert: {
           id?: string;
@@ -86,11 +87,13 @@ export interface Database {
           title?: string;
           content?: Json;
           is_public?: boolean;
+          yjs_state?: string | null;
         };
         Update: {
           title?: string;
           content?: Json;
           is_public?: boolean;
+          yjs_state?: string | null;
         };
         Relationships: [];
       };
@@ -124,6 +127,7 @@ export interface Database {
           is_public: boolean;
           created_at: string;
           updated_at: string;
+          yjs_state: string | null;
         };
         Insert: {
           id?: string;
@@ -132,12 +136,14 @@ export interface Database {
           language?: string;
           content?: string;
           is_public?: boolean;
+          yjs_state?: string | null;
         };
         Update: {
           name?: string;
           language?: string;
           content?: string;
           is_public?: boolean;
+          yjs_state?: string | null;
         };
         Relationships: [];
       };
@@ -315,6 +321,41 @@ export interface Database {
         };
         Relationships: [];
       };
+      ai_conversations: {
+        Row: {
+          id: string;
+          owner_id: string;
+          title: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          title?: string;
+        };
+        Update: {
+          title?: string;
+        };
+        Relationships: [];
+      };
+      ai_messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          role: "user" | "assistant";
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          role: "user" | "assistant";
+          content: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -337,6 +378,16 @@ export interface Database {
       admin_delete_user: {
         Args: { p_user_id: string };
         Returns: undefined;
+      };
+      get_content_contributors: {
+        Args: { p_kind: string; p_id: string };
+        Returns: {
+          user_id: string;
+          display_name: string | null;
+          email: string;
+          avatar_url: string | null;
+          first_contributed_at: string;
+        }[];
       };
       list_users_by_approval: {
         Args: { p_status: string | null };

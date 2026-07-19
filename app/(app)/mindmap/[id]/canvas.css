@@ -62,95 +62,9 @@
   position: relative;
   background: var(--bg-0);
 }
-
-/* React Flow dark surface tuning */
-.mm-canvas .react-flow__background {
-  background: var(--bg-0);
-}
-.mm-canvas .react-flow__attribution {
-  display: none;
-}
-.mm-canvas .react-flow__controls button {
-  background: var(--bg-3);
-  border-bottom: 1px solid var(--border-1);
-  color: var(--text-1);
-  fill: var(--text-1);
-}
-.mm-canvas .react-flow__controls button:hover {
-  background: var(--bg-4);
-}
-.mm-canvas .react-flow__minimap {
-  background: var(--bg-2);
-}
-.mm-canvas .react-flow__edge-path {
-  stroke: var(--border-2);
-  stroke-width: 1.5;
-}
-.mm-canvas .react-flow__edge.selected .react-flow__edge-path {
-  stroke: var(--steel);
-}
-.mm-canvas .react-flow__handle {
-  width: 8px;
-  height: 8px;
-  background: var(--steel);
-  border: 1px solid var(--bg-0);
-}
-
-/* custom nodes */
-.mm-node {
-  border-radius: var(--radius);
-  border: 1px solid var(--border-2);
-  background: var(--bg-2);
-  color: var(--text-1);
-  font-size: 12.5px;
-  min-width: 120px;
-  max-width: 240px;
-}
-.mm-node.selected {
-  border-color: var(--steel);
-  box-shadow: 0 0 0 1px var(--steel);
-}
-.mm-note {
-  padding: 4px;
-}
-.mm-note textarea {
-  width: 100%;
-  min-height: 44px;
-  resize: none;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--text-1);
-  font-family: var(--font-sans);
-  font-size: 12.5px;
-  line-height: 1.4;
-  padding: 4px 6px;
-}
-.mm-ref {
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  cursor: pointer;
-}
-.mm-ref .mm-kind {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--accent-hover);
-}
-.mm-ref.k-code .mm-kind {
-  color: var(--steel-hover);
-}
-.mm-ref.k-document .mm-kind {
-  color: var(--ok);
-}
-.mm-ref .mm-label {
-  color: var(--text-0);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  word-break: break-all;
+.mm-mount {
+  position: absolute;
+  inset: 0;
 }
 
 /* reference node side preview */
@@ -265,12 +179,19 @@
   .mm-bar {
     padding: 8px 14px;
   }
-  /* 액션 버튼 묶음이 한 줄에 못 들어가면 줄바꿈(화면 밖 이탈 방지). */
+  /* 액션 버튼 묶음이 한 줄에 못 들어가면 줄바꿈 대신 좌우 스크롤로 넘긴다. */
   .mm-bar > .row {
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    row-gap: 6px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
     min-width: 0;
+    flex: 1 1 auto;
+  }
+  .mm-bar > .row > * {
+    flex: none;
   }
   .mm-bar-left {
     flex-basis: 100%;

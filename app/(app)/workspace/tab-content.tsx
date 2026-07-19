@@ -83,6 +83,7 @@ export function TabContent({ kind, itemId }: { kind: TabKind; itemId: string }) 
         docId={d.id}
         initialTitle={d.title}
         initialContent={d.content}
+        initialYjsState={d.initialYjsState}
         canEdit={d.canEdit}
         isOwner={d.isOwner}
         isPublic={d.isPublic}
@@ -97,6 +98,7 @@ export function TabContent({ kind, itemId }: { kind: TabKind; itemId: string }) 
         initialName={d.name}
         initialLanguage={d.language}
         initialContent={d.content}
+        initialYjsState={d.initialYjsState}
         canEdit={d.canEdit}
         isOwner={d.isOwner}
         isPublic={d.isPublic}

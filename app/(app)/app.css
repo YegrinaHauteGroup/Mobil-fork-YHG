@@ -58,12 +58,13 @@
   flex: none;
 }
 
-/* ---- header search (center) ---- */
+/* ---- header search (바로 왼쪽에 프로필이 오도록 우측 정렬) ---- */
 .hsearch {
   position: relative;
-  flex: 1;
+  flex: none;
+  margin-left: auto;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 /* 돋보기 아이콘 버튼 — 데스크톱/태블릿에서는 숨기고 모바일에서만 노출한다. */
 .hsearch-icon-btn {
@@ -83,8 +84,7 @@
   border-color: var(--border-1);
 }
 .hsearch-input {
-  width: 100%;
-  max-width: 420px;
+  width: min(280px, 32vw);
   height: 32px;
   padding: 0 12px;
   font-size: 13px;
@@ -104,9 +104,9 @@
 .hsearch-dropdown {
   position: absolute;
   top: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 0;
   width: 100%;
+  min-width: 320px;
   max-width: 480px;
   max-height: 60vh;
   overflow-y: auto;
@@ -347,10 +347,9 @@
   padding: 0;
 }
 
-/* 계정 영역은 항상 헤더 우측에 정렬한다. */
-.acct {
-  margin-left: auto;
-}
+/* 계정 영역은 검색창(.hsearch, margin-left:auto 로 우측 여백을 전부 흡수)
+   바로 오른쪽에 이어 붙는다 — 여기 별도로 auto 마진을 주면 남은 공간을
+   검색창과 절반씩 나눠 가져 둘 사이에 불필요한 간격이 생긴다. */
 
 /* ---- body: rail + main ---- */
 .app-body {
@@ -465,6 +464,36 @@
   font-size: 13px;
   color: var(--text-2);
   margin: 6px 0 0;
+}
+
+/* 기여자(Contributor) 배지 — 소유자가 아니면서 저장한 이력이 있는 사용자. */
+.contributor-row {
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+.contributor-badge {
+  display: flex;
+  margin-left: -6px;
+}
+.contributor-badge:first-child {
+  margin-left: 0;
+}
+.contributor-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-1);
+  object-fit: cover;
+  background: var(--bg-4);
+}
+.contributor-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-1);
 }
 
 /* 동료(co-worker) 디렉터리 */

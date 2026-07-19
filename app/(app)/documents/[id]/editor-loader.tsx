@@ -20,6 +20,7 @@ export function DocumentEditorLoader(props: {
   docId: string;
   initialTitle: string;
   initialContent: Json;
+  initialYjsState: string | null;
   canEdit: boolean;
   isOwner: boolean;
   isPublic: boolean;

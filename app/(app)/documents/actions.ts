@@ -71,6 +71,7 @@ export async function importDocument(
       id: data.id,
       title: data.title,
       content: data.content,
+      initialYjsState: null,
       isPublic: false,
       canEdit: true,
       isOwner: true,
@@ -160,6 +161,7 @@ export async function createDocumentTab(): Promise<{
       id: data.id,
       title: data.title,
       content: data.content,
+      initialYjsState: null,
       isPublic: false,
       canEdit: true,
       isOwner: true,
@@ -175,7 +177,7 @@ export async function getDocumentForTab(id: string) {
 
   const { data: doc } = await supabase
     .from("documents")
-    .select("id, owner_id, title, content, is_public, updated_at")
+    .select("id, owner_id, title, content, is_public, updated_at, yjs_state")
     .eq("id", id)
     .single();
 
@@ -196,6 +198,7 @@ export async function getDocumentForTab(id: string) {
     id: doc.id,
     title: doc.title,
     content: doc.content,
+    initialYjsState: doc.yjs_state,
     isPublic: doc.is_public,
     canEdit,
     isOwner: doc.owner_id === userId,
@@ -203,11 +206,14 @@ export async function getDocumentForTab(id: string) {
   };
 }
 
-/** 제목/콘텐츠 저장. content 는 Tiptap JSON. */
+/** 제목/콘텐츠 저장. content 는 Tiptap JSON. yjsState 는 실시간 동시편집용
+ * Yjs 스냅샷(base64, Y.encodeStateAsUpdate) — 다음 접속자가 이 시점부터
+ * 이어서 동기화할 수 있도록 저장해둔다. */
 export async function saveDocument(
   id: string,
   title: string,
-  content: Json
+  content: Json,
+  yjsState?: string | null
 ): Promise<ActionResult> {
   const supabase = await createClient();
   const {
@@ -217,7 +223,11 @@ export async function saveDocument(
 
   const { error } = await supabase
     .from("documents")
-    .update({ title: title.trim() || "Untitled", content })
+    .update({
+      title: title.trim() || "Untitled",
+      content,
+      ...(yjsState !== undefined ? { yjs_state: yjsState } : {}),
+    })
     .eq("id", id);
 
   if (error) return { ok: false, error: "Save failed." };

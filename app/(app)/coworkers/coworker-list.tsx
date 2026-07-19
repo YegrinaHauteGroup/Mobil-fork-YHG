@@ -30,8 +30,8 @@ export function CoworkerList({ coworkers }: { coworkers: Coworker[] }) {
   }, [coworkers, query]);
 
   return (
-    <div>
-      <div className="panel-header" style={{ border: "none", padding: 0, marginBottom: 14 }}>
+    <div className="panel">
+      <div className="panel-header">
         <span className="label">
           PEOPLE ({filtered.length}
           {query ? ` / ${coworkers.length}` : ""})
@@ -50,7 +50,7 @@ export function CoworkerList({ coworkers }: { coworkers: Coworker[] }) {
       ) : filtered.length === 0 ? (
         <div className="empty">No one matches “{query}”.</div>
       ) : (
-        <div className="coworker-grid">
+        <div className="panel-body coworker-grid">
           {filtered.map((c) => {
             const name = c.display_name || c.email.split("@")[0];
             const initial = (name || "?").charAt(0).toUpperCase();
