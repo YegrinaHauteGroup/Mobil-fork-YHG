@@ -22,6 +22,7 @@ import { useWorkspace } from "../../workspace/workspace-context";
 import { ContributorBadges } from "../../contributors/contributor-badges";
 import { formatBytes } from "@/lib/format";
 import { createDocumentFromMindmap, createSheetFromMindmap } from "../../convert-actions";
+import { connectSnapshotBroadcast } from "@/lib/snapshot-broadcast";
 
 type SaveState = "saved" | "dirty" | "saving";
 const AUTOSAVE_MS = 1200;
@@ -153,9 +154,26 @@ function Inner({
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const titleRef = useRef(title);
+  const saveStateRef = useRef<SaveState>("saved");
+  const broadcastRef = useRef<ReturnType<typeof connectSnapshotBroadcast<MindElixirData>> | null>(null);
   useEffect(() => {
     titleRef.current = title;
   }, [title]);
+  useEffect(() => {
+    saveStateRef.current = saveState;
+  }, [saveState]);
+
+  // 다른 접속자와 전체 맵 스냅샷을 실시간으로 주고받는다(문서/코드의 Yjs
+  // CRDT 와 달리 진짜 병합은 아니고, 저장할 때마다 통째로 브로드캐스트).
+  useEffect(() => {
+    const conn = connectSnapshotBroadcast<MindElixirData>(`mindmap:${mapId}`, (data) => {
+      // 로컬에 저장 안 된 편집이 있으면 방금 받은 스냅샷으로 덮어쓰지 않는다.
+      if (saveStateRef.current === "dirty") return;
+      meRef.current?.refresh(data);
+    });
+    broadcastRef.current = conn;
+    return () => conn.disconnect();
+  }, [mapId]);
 
   const persist = useCallback(async () => {
     const me = meRef.current;
@@ -163,8 +181,10 @@ function Inner({
     setSaveState("saving");
     const data = me.getData();
     const res = await saveMindMap(mapId, titleRef.current, data as unknown as Json);
-    if (res.ok) setSaveState("saved");
-    else {
+    if (res.ok) {
+      setSaveState("saved");
+      broadcastRef.current?.send(data);
+    } else {
       setSaveState("dirty");
       setError(res.error);
     }
