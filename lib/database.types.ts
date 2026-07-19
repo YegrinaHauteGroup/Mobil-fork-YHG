@@ -356,6 +356,23 @@ export interface Database {
         Update: Record<string, never>;
         Relationships: [];
       };
+      starred_items: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind: "document" | "code" | "sheet" | "file";
+          object_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind: "document" | "code" | "sheet" | "file";
+          object_id: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

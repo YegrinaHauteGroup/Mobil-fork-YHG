@@ -99,6 +99,14 @@ export async function changePassword(
 export async function setAvatarUrl(
   url: string
 ): Promise<{ ok: true } | { error: string }> {
+  // 클라이언트가 넘기는 값이므로 우리 Supabase Storage 공개 URL 만 허용한다 —
+  // 임의 외부/스킴 URL 이 프로필에 저장되는 것을 원천 차단(어차피 CSP 의
+  // img-src 가 렌더링은 막지만, 저장 단계에서부터 거른다).
+  const storageOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!storageOrigin || !url.startsWith(`${storageOrigin}/storage/v1/object/public/`)) {
+    return { error: "Invalid avatar URL." };
+  }
+
   const supabase = await createClient();
   const {
     data: { user },

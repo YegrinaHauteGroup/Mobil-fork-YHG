@@ -3,6 +3,7 @@ import { Copyable } from "@/components/copyable";
 import { SettingsForm } from "./settings-form";
 import { AvatarUpload } from "./avatar-upload";
 import { PasswordForm } from "./password-form";
+import { ConnectedSystems } from "../dashboard/connected-systems";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +22,6 @@ export default async function SettingsPage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Settings</h1>
-            <p className="page-sub">Manage your profile and account.</p>
           </div>
         </div>
 
@@ -78,7 +78,7 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        <div className="panel">
+        <div className="panel" style={{ marginBottom: 24 }}>
           <div className="panel-header">
             <span className="label">MY SHARE ID</span>
           </div>
@@ -88,6 +88,14 @@ export default async function SettingsPage() {
             </p>
             <Copyable value={userId} />
           </div>
+        </div>
+
+        <ConnectedSystems />
+
+        <div className="acct-license" style={{ marginTop: 24, border: "none", padding: 0 }}>
+          <div className="acct-license-title">Mobil 1.0</div>
+          <div className="acct-license-line">Developed by Haewon Jeong</div>
+          <div className="acct-license-line">Apache License 2.0</div>
         </div>
       </div>
     </>

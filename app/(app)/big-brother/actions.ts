@@ -54,9 +54,16 @@ function reconstructAbstract(invertedIndex: Record<string, number[]> | undefined
   return words.join(" ").trim() || null;
 }
 
+// 외부 검색 API 공통 타임아웃 — 한 공급자가 응답을 물고 있어도 나머지 결과와
+// (이 검색을 도구로 쓰는) Sophia 응답까지 같이 멈추지 않게 한다.
+const SEARCH_TIMEOUT_MS = 8000;
+
 async function searchOpenAlex(query: string): Promise<PaperResult[]> {
   const url = `https://api.openalex.org/works?search=${encodeURIComponent(query)}&per_page=8`;
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  const res = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`OpenAlex returned ${res.status}`);
   const json = await res.json();
   const results = Array.isArray(json?.results) ? json.results : [];
@@ -83,7 +90,10 @@ async function searchSemanticScholar(query: string): Promise<PaperResult[]> {
   const url = `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURIComponent(
     query
   )}&limit=8&fields=title,abstract,year,authors,url`;
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  const res = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
+  });
   if (!res.ok) throw new Error(`Semantic Scholar returned ${res.status}`);
   const json = await res.json();
   const results = Array.isArray(json?.data) ? json.data : [];
@@ -107,6 +117,7 @@ async function searchGitHubCode(query: string, token: string): Promise<CodeResul
       Accept: "application/vnd.github.text-match+json",
       "X-GitHub-Api-Version": "2022-11-28",
     },
+    signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`GitHub code search returned ${res.status}`);
   const json = await res.json();
@@ -238,6 +249,22 @@ export async function addPaperToDocument(
   };
 }
 
+// GitHub owner/repo 이름 규칙(영숫자·하이픈·언더스코어·점). 서버 액션 인자는
+// 결국 클라이언트가 임의로 보낼 수 있는 값이므로, GITHUB_TOKEN 이 실리는
+// 요청 URL 에 넣기 전에 형태를 강제한다.
+const GH_NAME_RE = /^[\w.-]{1,100}$/;
+
+/** repo 내 파일 경로 검증: 상위 이동(..)과 URL 메타문자로 인한 엔드포인트
+ * 변조를 막고, 각 세그먼트를 인코딩해 경로 그대로만 요청되게 한다. */
+function encodeGithubPath(path: string): string | null {
+  if (!path || path.length > 500 || path.startsWith("/")) return null;
+  const segments = path.split("/");
+  for (const seg of segments) {
+    if (!seg || seg === "." || seg === "..") return null;
+  }
+  return segments.map(encodeURIComponent).join("/");
+}
+
 /** GitHub 코드 결과 → 새 코드 파일(전체 내용을 Contents API 로 받아온다). */
 export async function addGithubResultToCode(
   result: CodeResult
@@ -251,16 +278,22 @@ export async function addGithubResultToCode(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Authentication required." };
 
+  const safePath = encodeGithubPath(result.path);
+  if (!GH_NAME_RE.test(result.owner) || !GH_NAME_RE.test(result.repo) || !safePath) {
+    return { error: "Invalid repository reference." };
+  }
+
   let content: string;
   try {
     const res = await fetch(
-      `https://api.github.com/repos/${result.owner}/${result.repo}/contents/${result.path}`,
+      `https://api.github.com/repos/${result.owner}/${result.repo}/contents/${safePath}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/vnd.github+json",
           "X-GitHub-Api-Version": "2022-11-28",
         },
+        signal: AbortSignal.timeout(SEARCH_TIMEOUT_MS),
       }
     );
     if (!res.ok) return { error: `Failed to fetch file from GitHub (${res.status}).` };

@@ -4,6 +4,7 @@ import { createSheetTab, importSheet } from "./actions";
 import { SheetList } from "./sheet-list";
 import { NewItemButton } from "../workspace/new-item-button";
 import { ImportItemButton } from "../workspace/import-item-button";
+import { listStarredIds } from "../starred-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +12,13 @@ export default async function SheetsPage() {
   const { userId } = await requireUser();
   const supabase = await createClient();
 
-  const { data: sheets } = await supabase
-    .from("sheets")
-    .select("id, owner_id, title, is_public, updated_at")
-    .order("updated_at", { ascending: false });
+  const [{ data: sheets }, starredIds] = await Promise.all([
+    supabase
+      .from("sheets")
+      .select("id, owner_id, title, is_public, updated_at")
+      .order("updated_at", { ascending: false }),
+    listStarredIds("sheet"),
+  ]);
 
   return (
     <>
@@ -26,10 +30,6 @@ export default async function SheetsPage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Table</h1>
-            <p className="page-sub">
-              Spreadsheets with formulas, cell formatting and multiple tabs —
-              in the browser.
-            </p>
           </div>
           <div className="row" style={{ gap: 8 }}>
             <ImportItemButton
@@ -42,7 +42,7 @@ export default async function SheetsPage() {
           </div>
         </div>
 
-        <SheetList sheets={sheets ?? []} userId={userId} />
+        <SheetList sheets={sheets ?? []} userId={userId} starredIds={starredIds} />
       </div>
     </>
   );

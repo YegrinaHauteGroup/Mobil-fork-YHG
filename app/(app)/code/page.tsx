@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { createCodeFileTab } from "./actions";
 import { CodeList } from "./code-list";
 import { NewItemButton } from "../workspace/new-item-button";
+import { listStarredIds } from "../starred-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -10,10 +11,13 @@ export default async function CodePage() {
   const { userId } = await requireUser();
   const supabase = await createClient();
 
-  const { data: files } = await supabase
-    .from("code_files")
-    .select("id, owner_id, name, language, is_public, updated_at")
-    .order("updated_at", { ascending: false });
+  const [{ data: files }, starredIds] = await Promise.all([
+    supabase
+      .from("code_files")
+      .select("id, owner_id, name, language, is_public, updated_at")
+      .order("updated_at", { ascending: false }),
+    listStarredIds("code"),
+  ]);
 
   const list = files ?? [];
 
@@ -27,14 +31,11 @@ export default async function CodePage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Code</h1>
-            <p className="page-sub">
-              Write and edit code in the browser — syntax highlighting, auto and manual save.
-            </p>
           </div>
           <NewItemButton kind="code" label="New code file" create={createCodeFileTab} />
         </div>
 
-        <CodeList files={list} userId={userId} />
+        <CodeList files={list} userId={userId} starredIds={starredIds} />
       </div>
     </>
   );

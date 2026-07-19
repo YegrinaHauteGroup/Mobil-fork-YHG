@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/format";
 import { OpenItemButton } from "../workspace/open-item-button";
+import { StarButton } from "../star-button";
 
 type CodeRow = {
   id: string;
@@ -13,42 +14,77 @@ type CodeRow = {
   updated_at: string;
 };
 
-export function CodeList({ files, userId }: { files: CodeRow[]; userId: string }) {
+export function CodeList({
+  files,
+  userId,
+  starredIds,
+}: {
+  files: CodeRow[];
+  userId: string;
+  starredIds: string[];
+}) {
   const [query, setQuery] = useState("");
+  const [starredOnly, setStarredOnly] = useState(false);
+  const [starredSet, setStarredSet] = useState(() => new Set(starredIds));
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return files;
-    return files.filter(
-      (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.language.toLowerCase().includes(q)
-    );
-  }, [files, query]);
+    return files
+      .filter((c) => !starredOnly || starredSet.has(c.id))
+      .filter(
+        (c) =>
+          !q ||
+          c.name.toLowerCase().includes(q) ||
+          c.language.toLowerCase().includes(q)
+      );
+  }, [files, query, starredOnly, starredSet]);
+
+  const setStarred = (id: string, starred: boolean) => {
+    setStarredSet((prev) => {
+      const next = new Set(prev);
+      if (starred) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
 
   return (
     <div className="panel">
       <div className="panel-header">
         <span className="label">
           CODE FILES ({filtered.length}
-          {query ? ` / ${files.length}` : ""})
+          {query || starredOnly ? ` / ${files.length}` : ""})
         </span>
-        <input
-          className="input"
-          style={{ width: 240, height: 30 }}
-          placeholder="Search filename or language…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <div className="row" style={{ gap: 8 }}>
+          <button
+            type="button"
+            className={`btn btn-ghost btn-sm filter-star ${starredOnly ? "active" : ""}`}
+            onClick={() => setStarredOnly((v) => !v)}
+            aria-pressed={starredOnly}
+          >
+            {starredOnly ? "★" : "☆"} Starred
+          </button>
+          <input
+            className="input"
+            style={{ width: 240, height: 30 }}
+            placeholder="Search filename or language…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
       </div>
       {files.length === 0 ? (
         <div className="empty">No code files yet. Use “New code file” to start.</div>
       ) : filtered.length === 0 ? (
-        <div className="empty">No files match “{query}”.</div>
+        <div className="empty">
+          {starredOnly ? "No starred code files." : `No files match “${query}”.`}
+        </div>
       ) : (
         <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
+              <th style={{ width: 34 }}></th>
               <th>Filename</th>
               <th style={{ width: 130 }}>Language</th>
               <th style={{ width: 90 }}>Visibility</th>
@@ -60,6 +96,14 @@ export function CodeList({ files, userId }: { files: CodeRow[]; userId: string }
           <tbody>
             {filtered.map((c) => (
               <tr key={c.id}>
+                <td>
+                  <StarButton
+                    kind="code"
+                    id={c.id}
+                    initialStarred={starredSet.has(c.id)}
+                    onChange={(v) => setStarred(c.id, v)}
+                  />
+                </td>
                 <td className="mono">
                   <OpenItemButton kind="code" id={c.id} title={c.name} className="link-btn">
                     {c.name}

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { formatDate } from "@/lib/format";
 import { OpenItemButton } from "../workspace/open-item-button";
+import { StarButton } from "../star-button";
 
 type SheetRow = {
   id: string;
@@ -12,38 +13,72 @@ type SheetRow = {
   updated_at: string;
 };
 
-export function SheetList({ sheets, userId }: { sheets: SheetRow[]; userId: string }) {
+export function SheetList({
+  sheets,
+  userId,
+  starredIds,
+}: {
+  sheets: SheetRow[];
+  userId: string;
+  starredIds: string[];
+}) {
   const [query, setQuery] = useState("");
+  const [starredOnly, setStarredOnly] = useState(false);
+  const [starredSet, setStarredSet] = useState(() => new Set(starredIds));
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return sheets;
-    return sheets.filter((s) => (s.title || "").toLowerCase().includes(q));
-  }, [sheets, query]);
+    return sheets
+      .filter((s) => !starredOnly || starredSet.has(s.id))
+      .filter((s) => !q || (s.title || "").toLowerCase().includes(q));
+  }, [sheets, query, starredOnly, starredSet]);
+
+  const setStarred = (id: string, starred: boolean) => {
+    setStarredSet((prev) => {
+      const next = new Set(prev);
+      if (starred) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
 
   return (
     <div className="panel">
       <div className="panel-header">
         <span className="label">
           TABLE ({filtered.length}
-          {query ? ` / ${sheets.length}` : ""})
+          {query || starredOnly ? ` / ${sheets.length}` : ""})
         </span>
-        <input
-          className="input"
-          style={{ width: 240, height: 30 }}
-          placeholder="Search title…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <div className="row" style={{ gap: 8 }}>
+          <button
+            type="button"
+            className={`btn btn-ghost btn-sm filter-star ${starredOnly ? "active" : ""}`}
+            onClick={() => setStarredOnly((v) => !v)}
+            aria-pressed={starredOnly}
+          >
+            {starredOnly ? "★" : "☆"} Starred
+          </button>
+          <input
+            className="input"
+            style={{ width: 240, height: 30 }}
+            placeholder="Search title…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
       </div>
       {sheets.length === 0 ? (
         <div className="empty">No tables yet. Use “New sheet” to start.</div>
       ) : filtered.length === 0 ? (
-        <div className="empty">No tables match “{query}”.</div>
+        <div className="empty">
+          {starredOnly ? "No starred tables." : `No tables match “${query}”.`}
+        </div>
       ) : (
         <div className="table-scroll">
         <table className="table">
           <thead>
             <tr>
+              <th style={{ width: 34 }}></th>
               <th>Title</th>
               <th style={{ width: 90 }}>Visibility</th>
               <th style={{ width: 60 }}>Owner</th>
@@ -54,6 +89,14 @@ export function SheetList({ sheets, userId }: { sheets: SheetRow[]; userId: stri
           <tbody>
             {filtered.map((s) => (
               <tr key={s.id}>
+                <td>
+                  <StarButton
+                    kind="sheet"
+                    id={s.id}
+                    initialStarred={starredSet.has(s.id)}
+                    onChange={(v) => setStarred(s.id, v)}
+                  />
+                </td>
                 <td>
                   <OpenItemButton kind="sheet" id={s.id} title={s.title || "Untitled sheet"} className="link-btn">
                     {s.title || "Untitled sheet"}

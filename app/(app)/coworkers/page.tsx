@@ -19,9 +19,6 @@ export default async function CoworkersPage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Co-workers</h1>
-            <p className="page-sub">
-              Everyone using Mobil — showing only what each person has chosen to make public.
-            </p>
           </div>
         </div>
 

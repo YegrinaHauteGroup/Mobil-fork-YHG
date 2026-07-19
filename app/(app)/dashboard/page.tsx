@@ -3,7 +3,6 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { Copyable } from "@/components/copyable";
 import { StorageBreakdownChart, StorageShareBar } from "./storage-chart";
-import { ConnectedSystems } from "./connected-systems";
 import { OpenItemButton } from "../workspace/open-item-button";
 
 export default async function DashboardPage() {
@@ -59,9 +58,6 @@ export default async function DashboardPage() {
             <h1 className="page-h">
               Welcome, {profile.display_name || profile.email.split("@")[0]}
             </h1>
-            <p className="page-sub">
-              Overview of your storage and recent documents.
-            </p>
           </div>
         </div>
 
@@ -91,8 +87,6 @@ export default async function DashboardPage() {
             <div className="stat-label label">ACCESS LEVEL</div>
           </div>
         </div>
-
-        <ConnectedSystems />
 
         <div className="stg-grid">
           <div className="panel">

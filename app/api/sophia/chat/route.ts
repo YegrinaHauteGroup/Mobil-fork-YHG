@@ -27,7 +27,15 @@ type ChatMessage = {
   tool_call_id?: string;
 };
 
-function isRetryableStatus(status: number): boolean {
+/** 키 순회로도 해소 안 되는 "요청 자체가 거부됨"(엔드포인트가 이 파라미터
+ * 조합을 지원하지 않음 등). 이 경우 같은 요청을 재시도해봐야 소용없고,
+ * 파라미터를 바꿔(스트리밍/도구 끄기) 강등 재시도해야 한다. */
+function isInvalidRequestStatus(status: number): boolean {
+  return status >= 400 && status < 500 && status !== 401 && status !== 403 && status !== 429;
+}
+
+/** 키를 바꿔 재시도할 가치가 있는 오류(인증/레이트리밋/서버 오류). */
+function isKeyRetryableStatus(status: number): boolean {
   return status === 401 || status === 403 || status === 429 || status >= 500;
 }
 
@@ -39,17 +47,24 @@ function getOrderedKeys(): string[] {
   );
 }
 
-/** 여러 키를 순서대로 시도해 스트리밍 응답을 얻는다. 전부 실패하면 null. */
+type NvidiaCallResult =
+  | { ok: true; upstream: Response }
+  | { ok: false; upstreamStatus: number | null; detail: string };
+
+/** 키들을 순서대로 시도한다. 실패 시 업스트림 상태코드와 본문 일부를 그대로
+ * 돌려줘 호출자가 강등(파라미터 변경) 여부를 판단하고, 사용자에게도 원인이
+ * 보이게 한다. */
 async function callNvidia(
   messages: ChatMessage[],
-  tools: typeof SOPHIA_TOOLS | undefined
-): Promise<{ upstream: Response } | { error: string; status: number }> {
+  opts: { tools: boolean; stream: boolean }
+): Promise<NvidiaCallResult> {
   const keys = getOrderedKeys();
   if (keys.length === 0) {
-    return { error: "Sophia isn't configured yet (missing NVIDIA_API_KEY).", status: 500 };
+    return { ok: false, upstreamStatus: null, detail: "missing NVIDIA_API_KEY" };
   }
 
   let lastStatus: number | null = null;
+  let lastDetail = "network error";
   for (let i = 0; i < keys.length; i++) {
     const isLastKey = i === keys.length - 1;
     try {
@@ -65,33 +80,40 @@ async function callNvidia(
           temperature: 0.2,
           top_p: 0.7,
           max_tokens: 1024,
-          stream: true,
-          ...(tools ? { tools, tool_choice: "auto" } : {}),
+          stream: opts.stream,
+          ...(opts.tools ? { tools: SOPHIA_TOOLS } : {}),
         }),
       });
-      if (res.ok) return { upstream: res };
+      if (res.ok) return { ok: true, upstream: res };
       lastStatus = res.status;
       const text = await res.text().catch(() => "");
-      console.error(`[sophia] NVIDIA API error (key ${i + 1}/${keys.length})`, res.status, text);
-      if (!isRetryableStatus(res.status) || isLastKey) {
-        return { error: `Sophia is unavailable right now (${res.status}).`, status: 502 };
+      lastDetail = text.slice(0, 300);
+      console.error(
+        `[sophia] NVIDIA error (key ${i + 1}/${keys.length}, tools=${opts.tools}, stream=${opts.stream})`,
+        res.status,
+        text
+      );
+      // 요청 형식 거부(400 등)는 키를 바꿔도 똑같이 실패한다 — 즉시 반환해
+      // 호출자가 파라미터를 강등해 재시도하게 한다.
+      if (!isKeyRetryableStatus(res.status) || isLastKey) {
+        return { ok: false, upstreamStatus: res.status, detail: lastDetail };
       }
     } catch (e) {
-      console.error(`[sophia] NVIDIA API request failed (key ${i + 1}/${keys.length})`, e);
-      if (isLastKey) return { error: "Sophia is unavailable right now.", status: 502 };
+      console.error(`[sophia] NVIDIA request failed (key ${i + 1}/${keys.length})`, e);
+      lastDetail = e instanceof Error ? e.message : "network error";
+      if (isLastKey) return { ok: false, upstreamStatus: null, detail: lastDetail };
     }
   }
-  return { error: `Sophia is unavailable right now (${lastStatus ?? "network error"}).`, status: 502 };
+  return { ok: false, upstreamStatus: lastStatus, detail: lastDetail };
 }
 
 /**
  * 한 라운드의 SSE 스트림을 소비한다. tool_calls 델타가 하나라도 보이면 이
  * 라운드는 "도구 호출" 라운드로 간주해 텍스트를 클라이언트로 내보내지
- * 않고 조용히 누적만 한다(OpenAI 호환 API 는 한 메시지 안에서 content 와
- * tool_calls 를 섞어 보내지 않는다). tool_calls 가 전혀 없으면 최종 답변
- * 라운드이므로 델타가 오는 즉시 클라이언트로 스트리밍한다.
+ * 않고 조용히 누적만 한다. tool_calls 가 전혀 없으면 최종 답변 라운드이므로
+ * 델타가 오는 즉시 클라이언트로 스트리밍한다.
  */
-async function consumeRound(
+async function consumeStream(
   upstream: Response,
   forward: (chunk: string) => void
 ): Promise<{ content: string; toolCalls: ToolCallOut[] }> {
@@ -158,6 +180,33 @@ async function consumeRound(
   return { content, toolCalls };
 }
 
+/** 비스트리밍 응답 파싱 — 도구+스트리밍 조합을 거부하는 엔드포인트용 강등 경로. */
+async function consumeJson(
+  upstream: Response
+): Promise<{ content: string; toolCalls: ToolCallOut[] }> {
+  const json: {
+    choices?: {
+      message?: {
+        content?: string | null;
+        tool_calls?: { id?: string; function?: { name?: string; arguments?: string } }[];
+      };
+    }[];
+  } = await upstream.json();
+  const msg = json?.choices?.[0]?.message;
+  const toolCalls: ToolCallOut[] = (msg?.tool_calls ?? []).map((tc, i) => ({
+    id: tc.id || `call_${i}_${Math.random().toString(36).slice(2)}`,
+    type: "function" as const,
+    function: { name: tc.function?.name ?? "", arguments: tc.function?.arguments ?? "" },
+  }));
+  return { content: msg?.content ?? "", toolCalls };
+}
+
+// 도구 요청 방식. NVIDIA NIM 배포 버전에 따라 tools+stream 조합을 거부하는
+// 경우가 있어, 거부(4xx)를 만나면 한 단계씩 강등한다:
+//   stream(도구+스트리밍) → nonstream(도구+비스트리밍) → off(도구 없이 스트리밍)
+// off 까지 가면 도구는 못 쓰지만 일반 챗봇으로는 반드시 동작한다.
+type ToolsMode = "stream" | "nonstream" | "off";
+
 export async function POST(req: Request) {
   let body: { conversationId?: string; content?: string };
   try {
@@ -203,14 +252,32 @@ export async function POST(req: Request) {
 
   const isFirstMessage = (history ?? []).length <= 1;
 
-  // 첫 라운드는 스트림을 열기 전에 시도한다 — 실패하면(키 미설정, NVIDIA 쪽
-  // 오류 등) 이전처럼 적절한 상태 코드로 바로 응답할 수 있다. 도구를 호출한
-  // 이후의 라운드(2번째부터)는 이미 200 스트림이 시작된 뒤라 실패 시 본문에
-  // 에러 텍스트를 흘려보내는 것으로 대신한다 — 흔치 않은 경로다.
-  const firstAttempt = await callNvidia(messages, SOPHIA_TOOLS);
-  if ("error" in firstAttempt) {
-    return new Response(firstAttempt.error, { status: firstAttempt.status });
+  const formatError = (r: { upstreamStatus: number | null; detail: string }) =>
+    `Sophia is unavailable right now (NVIDIA ${r.upstreamStatus ?? "network"}: ${
+      r.detail || "no detail"
+    })`;
+
+  // 첫 업스트림 연결은 스트림을 열기 전에 확보한다 — 완전 실패(키 미설정,
+  // 전 모드 거부 등)라면 이전처럼 적절한 HTTP 상태코드로 바로 응답할 수 있다.
+  let toolsMode: ToolsMode = "stream";
+  let first: NvidiaCallResult = await callNvidia(messages, { tools: true, stream: true });
+  if (!first.ok && first.upstreamStatus !== null && isInvalidRequestStatus(first.upstreamStatus)) {
+    toolsMode = "nonstream";
+    first = await callNvidia(messages, { tools: true, stream: false });
   }
+  if (!first.ok && first.upstreamStatus !== null && isInvalidRequestStatus(first.upstreamStatus)) {
+    toolsMode = "off";
+    first = await callNvidia(messages, { tools: false, stream: true });
+  }
+  if (!first.ok) {
+    return new Response(formatError(first), { status: 502 });
+  }
+  if (toolsMode !== "stream") {
+    console.warn(`[sophia] degraded tools mode: ${toolsMode}`);
+  }
+
+  const firstUpstream = first.upstream;
+  const firstWasStream = toolsMode !== "nonstream";
 
   const encoder = new TextEncoder();
 
@@ -219,22 +286,34 @@ export async function POST(req: Request) {
       const forward = (chunk: string) => controller.enqueue(encoder.encode(chunk));
       let full = "";
       let failed: string | null = null;
-      let nextUpstream: Response | null = firstAttempt.upstream;
 
       try {
+        let pending: { upstream: Response; isStream: boolean } | null = {
+          upstream: firstUpstream,
+          isStream: firstWasStream,
+        };
+
         for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
           const isLastAllowedRound = round === MAX_TOOL_ROUNDS - 1;
-          if (!nextUpstream) {
-            const attempt = await callNvidia(messages, isLastAllowedRound ? undefined : SOPHIA_TOOLS);
-            if ("error" in attempt) {
-              failed = attempt.error;
+
+          if (!pending) {
+            // 마지막 허용 라운드거나 도구가 꺼졌으면 tools 없이 스트리밍으로
+            // 최종 답을 받는다. 그 외에는 현재 모드대로 도구를 붙인다.
+            const useTools = !isLastAllowedRound && toolsMode !== "off";
+            const wantStream = !useTools || toolsMode === "stream";
+            const attempt = await callNvidia(messages, { tools: useTools, stream: wantStream });
+            if (!attempt.ok) {
+              failed = formatError(attempt);
               break;
             }
-            nextUpstream = attempt.upstream;
+            pending = { upstream: attempt.upstream, isStream: wantStream };
           }
 
-          const { content, toolCalls } = await consumeRound(nextUpstream, forward);
-          nextUpstream = null;
+          const wasStream = pending.isStream;
+          const { content, toolCalls } = wasStream
+            ? await consumeStream(pending.upstream, forward)
+            : await consumeJson(pending.upstream);
+          pending = null;
 
           if (toolCalls.length > 0 && !isLastAllowedRound) {
             messages.push({ role: "assistant", content: content || null, tool_calls: toolCalls });
@@ -255,6 +334,9 @@ export async function POST(req: Request) {
             continue;
           }
 
+          // 스트리밍 경로는 consumeStream 이 델타를 이미 클라이언트로 내보냈다.
+          // 비스트리밍(JSON) 경로의 직접 답변만 여기서 한 번에 내보낸다.
+          if (!wasStream && content) forward(content);
           full = content;
           break;
         }

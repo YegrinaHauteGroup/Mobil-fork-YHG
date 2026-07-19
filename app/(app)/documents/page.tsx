@@ -4,6 +4,7 @@ import { createDocumentTab, importDocument } from "./actions";
 import { DocumentsList } from "./documents-list";
 import { NewItemButton } from "../workspace/new-item-button";
 import { ImportItemButton } from "../workspace/import-item-button";
+import { listStarredIds } from "../starred-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +12,13 @@ export default async function DocumentsPage() {
   const { userId } = await requireUser();
   const supabase = await createClient();
 
-  const { data: docs } = await supabase
-    .from("documents")
-    .select("id, owner_id, title, is_public, updated_at")
-    .order("updated_at", { ascending: false });
+  const [{ data: docs }, starredIds] = await Promise.all([
+    supabase
+      .from("documents")
+      .select("id, owner_id, title, is_public, updated_at")
+      .order("updated_at", { ascending: false }),
+    listStarredIds("document"),
+  ]);
 
   return (
     <>
@@ -26,9 +30,6 @@ export default async function DocumentsPage() {
         <div className="page-head">
           <div>
             <h1 className="page-h">Docs +</h1>
-            <p className="page-sub">
-              Your own and shared documents. Content is stored as structured JSON.
-            </p>
           </div>
           <div className="row" style={{ gap: 8 }}>
             <ImportItemButton
@@ -41,7 +42,7 @@ export default async function DocumentsPage() {
           </div>
         </div>
 
-        <DocumentsList docs={docs ?? []} userId={userId} />
+        <DocumentsList docs={docs ?? []} userId={userId} starredIds={starredIds} />
       </div>
     </>
   );
