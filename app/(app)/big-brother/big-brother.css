@@ -1,0 +1,58 @@
+.bb-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+.bb-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-0);
+  border-radius: var(--radius-lg);
+}
+.bb-card-title {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-0);
+  line-height: 1.4;
+  word-break: break-word;
+}
+.bb-card-meta {
+  font-size: 12px;
+  color: var(--text-2);
+}
+.bb-card-snippet {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-2);
+  line-height: 1.5;
+}
+.bb-card-code {
+  margin: 0;
+  padding: 8px 10px;
+  background: var(--bg-0);
+  border: 1px solid var(--border-1);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 140px;
+  overflow-y: auto;
+}
+.bb-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .bb-grid {
+    grid-template-columns: 1fr;
+  }
+}
