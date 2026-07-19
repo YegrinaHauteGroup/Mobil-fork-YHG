@@ -397,7 +397,9 @@ function Inner({
       )}
 
       <div className="mm-canvas">
-        <div ref={containerRef} className="mm-mount" />
+        <div className="mm-fill">
+          <div ref={containerRef} className="mm-mount" />
+        </div>
 
         {preview && (
           <div className="mm-preview">

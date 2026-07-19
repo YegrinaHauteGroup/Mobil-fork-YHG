@@ -62,9 +62,20 @@
   position: relative;
   background: var(--bg-0);
 }
-.mm-mount {
+/* Mind Elixir 는 생성자에서 넘겨받은 엘리먼트에 인라인으로
+   style.position = "relative" 를 강제로 지정한다 — 인라인 스타일은 항상
+   스타일시트 규칙을 이기므로, .mm-mount 자체에 position:absolute 를 걸어도
+   무시되고 콘텐츠 높이(마인드맵 노드가 차지하는 만큼)로 쪼그라들어 화면
+   아래쪽이 빈 채로 잘려 보인다. 그래서 채우는 역할은 한 겹 바깥의
+   .mm-fill 이 담당하고, Mind Elixir 에게 넘기는 .mm-mount 는 그 안에서
+   height/width 100% 로만 채운다. */
+.mm-fill {
   position: absolute;
   inset: 0;
+}
+.mm-mount {
+  height: 100%;
+  width: 100%;
 }
 
 /* reference node side preview */

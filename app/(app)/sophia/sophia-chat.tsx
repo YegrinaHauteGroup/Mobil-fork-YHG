@@ -7,7 +7,6 @@ import {
   createConversation,
   getMessages,
   deleteConversation,
-  sendMessage,
   type ConversationRow,
   type MessageRow,
 } from "./actions";
@@ -96,38 +95,50 @@ export function SophiaChat({
     setError(null);
     setInput("");
     setSending(true);
-    const optimisticId = `pending-${Date.now()}`;
+
+    const userMsgId = `pending-user-${Date.now()}`;
+    const replyId = `pending-reply-${Date.now()}`;
     setMessages((prev) => [
       ...prev,
-      { id: optimisticId, role: "user", content: text, created_at: new Date().toISOString() },
-      {
-        id: `${optimisticId}-thinking`,
-        role: "assistant",
-        content: "…",
-        created_at: new Date().toISOString(),
-        pending: true,
-      },
+      { id: userMsgId, role: "user", content: text, created_at: new Date().toISOString() },
+      { id: replyId, role: "assistant", content: "", created_at: new Date().toISOString(), pending: true },
     ]);
 
-    const res = await sendMessage(conversationId, text);
-    setSending(false);
+    try {
+      const res = await fetch("/api/sophia/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversationId, content: text }),
+      });
 
-    if ("error" in res) {
-      setError(res.error);
-      setMessages((prev) => prev.filter((m) => !m.id.startsWith(optimisticId)));
-      return;
+      if (!res.ok || !res.body) {
+        const message = await res.text().catch(() => "Sophia is unavailable right now.");
+        setError(message || "Sophia is unavailable right now.");
+        setMessages((prev) => prev.filter((m) => m.id !== userMsgId && m.id !== replyId));
+        return;
+      }
+
+      // 스트림이 들어오는 대로 답변 버블에 실시간으로 이어붙인다.
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        if (!chunk) continue;
+        setMessages((prev) =>
+          prev.map((m) => (m.id === replyId ? { ...m, content: m.content + chunk } : m))
+        );
+      }
+      setMessages((prev) =>
+        prev.map((m) => (m.id === replyId ? { ...m, pending: false } : m))
+      );
+    } catch {
+      setError("Sophia is unavailable right now.");
+      setMessages((prev) => prev.filter((m) => m.id !== userMsgId && m.id !== replyId));
+    } finally {
+      setSending(false);
     }
-
-    setMessages((prev) => [
-      ...prev.filter((m) => !m.id.startsWith(optimisticId)),
-      { id: `${optimisticId}-user`, role: "user", content: text, created_at: new Date().toISOString() },
-      {
-        id: `${optimisticId}-reply`,
-        role: "assistant",
-        content: res.reply,
-        created_at: new Date().toISOString(),
-      },
-    ]);
 
     // 첫 메시지였다면 목록의 제목/정렬을 서버 기준으로 다시 맞춘다.
     listConversations().then(setConversations);
@@ -200,7 +211,7 @@ export function SophiaChat({
                 key={m.id}
                 className={`sophia-msg ${m.role} ${m.pending ? "pending" : ""}`}
               >
-                {m.content}
+                {m.pending && !m.content ? "…" : m.content}
               </div>
             ))}
         </div>
